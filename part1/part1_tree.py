@@ -1,6 +1,7 @@
-from training import *
-
-bdt = BinaryDecisionTreeNode()
+from training import TrainingBayesModel
+from binaryTree import BinaryNode
+ 
+bdt = BinaryNode()
 #root
 bdt.setAttribute("first")
 bdt.insert("left", "second")
