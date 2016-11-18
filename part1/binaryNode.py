@@ -7,11 +7,13 @@ class BinaryNode:
         self.left = None
         self.right = None
         
+    '''       
     def setAttribute(self, attribute): # Need this only for root node, which is initialized with attribute = decision = None
         self.attribute = attribute
     
     def setDecision(self, decision):
         self.decision = decision
+    '''
 
     def insert(self, sideToInsert, attribute = None, decision = None):
         newNode = BinaryNode(attribute, decision)

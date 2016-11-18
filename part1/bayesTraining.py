@@ -1,6 +1,7 @@
 from __future__ import division
 import os, string, sys, math, pickle
 from collections import Counter
+import re
 
 class TrainingBayesModel:
     def __init__(self, directory):
@@ -21,25 +22,6 @@ class TrainingBayesModel:
         # Key = Word, Value = Number of occurences in training data 
         self.wordCountInNotSpam_Multinomial = Counter()
         self.wordCountInSpam_Multinomial = Counter() 
- 
-    '''
-        self.decisionTree_Binary = BinaryDecisionTree()
-        #self.decisionTree_Other = ...
-        
-    def decisionTreeLearning_Bernoulli(self, wordCountNotSpam, wordCountSpam):
-        ''uses self.probWGivenNotSpam_Bernoulli and self.probWGivenSpam_Bernoulli
-        when only creatingVector has been run on them.
-        need to decide whether to keep the recursive helper function
-        p. 702 - 704 of textbook ''
-        return
-    
-    def decisionTreeLearningRecursive_Bernoulli(self, wordCountNotSpam, wordCountSpam):
-        return
-        
-    def importance(self, wordCountNotSpam, wordCountSpam):
-        #calculate information gain
-        return
-    '''
 
     def fetchTokens(self, document):
         # Currently considering words after splitting on space and removing all punctuations. all lower case.
@@ -51,7 +33,7 @@ class TrainingBayesModel:
         flag = set() # Keeps track of word that has already been counted once for a particular document - For Bernoulli Model
         count = 0 # Counts total number of words in document
         for entry in self.fetchTokens(document):
-            if entry != '':
+            if entry != '' and re.match("^[\w\d_-]*$", entry):
                 count += 1
                 wordFreqMultinomial[entry] += 1
                 if entry in flag:
