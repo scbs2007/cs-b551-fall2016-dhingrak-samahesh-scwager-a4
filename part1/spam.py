@@ -11,7 +11,6 @@ if technique == "bayes":
         print "Training Done. Model stored in ", modelFile
  
     elif mode == "test":
-        # 0 - true positive, 1 - false negative, 2 - false positive, 3 - true negative
         trainedObj = pickle.load(open(modelFile, "rb"))
         print "Found Trained Model."  
         testingObj = TestModel(directory)

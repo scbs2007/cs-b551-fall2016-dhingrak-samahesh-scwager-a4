@@ -13,8 +13,11 @@ class TestModel:
         print "True Negative: ", confidenceMatrix[3] 
 
     def calculateProbWordsGivenS(self, probWGivenS, wordCount, pClass):
-        #return sum([math.log(probWGivenS[entry]) for entry in probWGivenS if entry in wordCount]) + math.log(pClass)
+        # For now considering only words present in the training data.
+        # Also for a particular test document's words - taking into consideration only P(W|S) and not 1 - P(W|S)
         return sum([math.log(probWGivenS[entry]) for entry in wordCount if entry in probWGivenS]) + math.log(pClass)
+
+
         result = 0
         for entry in probWGivenS:
             if entry in wordCount:
@@ -65,6 +68,7 @@ class TestModel:
         probWGivenSpam_Bernoulli = modelObj.probWGivenSpam_Bernoulli
         probWGivenNotSpam_Multinomial = modelObj.probWGivenNotSpam_Multinomial
         probWGivenSpam_Multinomial = modelObj.probWGivenSpam_Multinomial
+        # 0 - true positive, 1 - false negative, 2 - false positive, 3 - true negative
         confidenceMatrix_Bernoulli = [0, 0, 0, 0]
         confidenceMatrix_Multinomial = [0, 0, 0, 0]      
 
