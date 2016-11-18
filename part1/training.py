@@ -2,6 +2,43 @@ from __future__ import division
 import os, string, sys, math, pickle
 from collections import Counter
 
+class BinaryDecisionTreeNode:
+    ''' attribute is the chosen word. set decision = True or False to terminal nodes'''
+    def __init__(self, attribute = None, decision = None):
+        self.attribute = attribute
+        self.decision = decision
+        self.left = None
+        self.right = None
+        
+    def setAttribute(self, attribute): #need this only for root node, which is initialized with attribute = decision = None
+        self.attribute = attribute
+    
+    def setDecision(self, decision):
+        self.decision = decision
+
+    def insert(self, sideToInsert, attribute = None, decision = None):
+        newNode = BinaryDecisionTreeNode(attribute, decision)
+        if sideToInsert == 'left':
+            self.left = newNode
+        elif sideToInsert == 'right':
+            self.right = newNode
+        else: 
+            raise ValueError('need to insert binary decision node to the "left" or "right".')
+        
+    def display(self, depth = 0):
+        print "depth: ", depth
+        if self.attribute:
+            print "word: ", self.attribute
+        if self.decision:
+            print "decision node: ", "is spam" if self.decision is True else "is not spam"
+        if self.left:
+            print "if '" + self.attribute + "' is not in document:"
+            self.left.display(depth = depth + 1)
+        if self.right:
+            print "if '" + self.attribute + "' is in document:"
+            self.right.display(depth = depth + 1)
+    
+
 class TrainModel:
     def __init__(self, directory):
         self.directory = directory
@@ -12,7 +49,25 @@ class TrainModel:
         self.probWGivenSpam_Bernoulli = Counter()
 
         self.probWGivenNotSpam_Multinomial = Counter()
-        self.probWGivenSpam_Multinomial = Counter()        
+        self.probWGivenSpam_Multinomial = Counter()
+        
+        self.decisionTree_Binary = BinaryDecisionTree()
+        #self.decisionTree_Other = ...
+        
+        
+    def decisionTreeLearning_Bernoulli(self, wordCountNotSpam, wordCountSpam):
+        '''uses self.probWGivenNotSpam_Bernoulli and self.probWGivenSpam_Bernoulli
+        when only creatingVector has been run on them.
+        need to decide whether to keep the recursive helper function
+        p. 702 - 704 of textbook '''
+        return
+    
+    def decisionTreeLearningRecursive_Bernoulli(self, wordCountNotSpam, wordCountSpam):
+        return
+        
+    def importance(self, wordCountNotSpam, wordCountSpam):
+        #calculate information gain
+        return
 
     def fetchTokens(self, document):
         # Currently considering words after splitting on space and removing all punctuations.
