@@ -6,7 +6,7 @@ class BinaryTree:
         self.root = None
         self.wordCountNotSpam = self.processCorpus.wordCountInNotSpam_Bernoulli 
         self.wordCountSpam = self.processCorpus.wordCountInSpam_Bernoulli
-        self.wordList = list(set(self.wordCountNotSpam.keys() + self.wordCountSpam.keys())) #list with all the words in all emails
+        self.wordList = self.processCorpus.allWordsInCorpus #list with all the words in all emails
         '''
         each list element contains a counter dict for each word in a given document.
         for bernoulli, simply check whether word is in the counter dict. for multinomial, look at the word's value
@@ -30,7 +30,7 @@ class BinaryTree:
 
     def mostImportantWord(self, condition = {}): 
         bestWord, entropy = "", 1.1
-        for w in self.wordList:
+        for word in self.wordList:
             positiveCountSpam = negativeCountSpam = positiveCountNotSpam = negativeCountNotSpam = 0
             '''
             do to: add statement: if condition holds (e.g. word1 is not in document, word2 is in document, word3, ...etc)
@@ -38,9 +38,9 @@ class BinaryTree:
             documentDictListSpam: each list element contains a counter dict for each word in a given document.
             for bernoulli, simply check whether word is in the counter dict. for multinomial, look at the word's value
             '''
-            if w in self.documentDictListNotSpam: positiveCountNotSpam += 1
+            if word in self.documentDictListNotSpam: positiveCountNotSpam += 1
             else: negativeCountNotSpam += 1
-            if w in self.documentDictListSpam: positiveCountSpam += 1
+            if word in self.documentDictListSpam: positiveCountSpam += 1
             else: negativeCountSpam += 1
             
             '''

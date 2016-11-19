@@ -39,8 +39,9 @@ if technique == "bayes":
 elif technique == "dt":
     if mode == "train":
         decisionTree = trainingTree(modelFile, directory)
+        print "Training Done. Storing Model..."
         pickle.dump(decisionTree, open(modelFile, "wb"))
-        print "Training Done. Tree Model stored in ", modelFile
+        print "Tree Model stored in ", modelFile
     elif mode == "test":
         testingTree(directory)
     else:

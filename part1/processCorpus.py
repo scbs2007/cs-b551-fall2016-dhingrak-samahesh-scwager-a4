@@ -17,6 +17,7 @@ class ProcessCorpus:
         self.wordCountInNotSpam_Multinomial = Counter()
         self.wordCountInSpam_Multinomial = Counter() 
 
+        self.allWordsInCorpus = set() 
         self.totNotSpamDocs = 0
         self.totWordsInNotSpam = 0
         self.totSpamDocs = 0
@@ -35,6 +36,7 @@ class ProcessCorpus:
         for entry in self.fetchTokens(document):
             if not self.filterWord(entry):
                 count += 1
+                self.allWordsInCorpus.add(entry)
                 wordFreqMultinomial[entry] += 1
                 if entry in flag:
                     continue
