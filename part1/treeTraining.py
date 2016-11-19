@@ -9,7 +9,7 @@ from processCorpus import ProcessCorpus
 class TrainingTreeModel:
     def __init__(self, directory):
         self.directory = directory
-	    self.processCorpus = ProcessCorpus(directory)
+        self.processCorpus = ProcessCorpus(directory)
         self.binaryTree = None
         self.naryTree = None
         '''
