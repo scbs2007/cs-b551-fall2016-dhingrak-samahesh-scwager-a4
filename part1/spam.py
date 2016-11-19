@@ -17,7 +17,7 @@ def testingBayes(directory):
 
 def trainingTree(modelFile, directory):
     bayesObj = trainingBayes(modelFile, directory)
-    decisionTree = TrainingTreeModel(bayesObj)
+    decisionTree = TrainingTreeModel(directory, bayesObj)
     decisionTree.train()
     return decisionTree
 
