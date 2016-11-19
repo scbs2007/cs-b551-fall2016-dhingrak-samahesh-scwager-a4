@@ -1,12 +1,12 @@
 from binaryNode import BinaryNode
 
 class BinaryTree:
-    def __init__(self, probabilities, spamDocuments, notSpamDocuments):
-        self.prob = probabilities
+    def __init__(self, processCorpus, spamDocuments, notSpamDocuments):
+        self.processCorpus = processCorpus
         self.root = None
-        self.wordCountNotSpam = self.prob.wordCountInNotSpam_Bernoulli 
-        self.wordCountSpam = self.prob.wordCountInSpam_Bernoulli
-        self.wordList = list( set( self.wordCountNotSpam.keys() + self.wordCountSpam.keys() ) ) #list with all the words in all emails
+        self.wordCountNotSpam = self.processCorpus.wordCountInNotSpam_Bernoulli 
+        self.wordCountSpam = self.processCorpus.wordCountInSpam_Bernoulli
+        self.wordList = list(set(self.wordCountNotSpam.keys() + self.wordCountSpam.keys())) #list with all the words in all emails
         '''
         each list element contains a counter dict for each word in a given document.
         for bernoulli, simply check whether word is in the counter dict. for multinomial, look at the word's value
@@ -14,10 +14,8 @@ class BinaryTree:
         self.documentDictListSpam = spamDocuments 
         self.documentDictListNotSpam = notSpamDocuments
 
-    def train(self):
-        self.decisionTreeLearning_Bernoulli()
-
-    def decisionTreeLearning_Bernoulli(self, maxHeight = 1):
+    def dtLearning(self, maxHeight = 1):
+        print "Training Binary Decision Tree Model."
         rootWord = self.mostImportantWord()
         self.root = BinaryNode(attribute = rootWord)
         
@@ -27,7 +25,7 @@ class BinaryTree:
         rightCondition = {rootWord: 1}
         return self.root
 
-    def decisionTreeLearningHelp_Bernoulli(self, condition, remainingHeight):
+    def dtLearningHelp(self, condition, remainingHeight):
         return
 
     def mostImportantWord(self, condition = {}): 
@@ -50,7 +48,6 @@ class BinaryTree:
             better
             '''
         pass
-            
             
     def entropy_Bernoulli(self, positiveCount, totalCount):
         p = float(positiveCount)/totalCount

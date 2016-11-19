@@ -86,14 +86,7 @@ class TestingBayesModel:
                 elif modelName == 'multinomial':
                     #om.append(oddsRatio)
                     self.multinomialThresh(oddsRatio, confidenceMatrix, threshold, classType)
-                     
-
-    def createHeap(self, prob):
-        heap = []
-        for key, value in prob.items():
-            heappush(heap, (value, key))
-        return heap
-
+                    
     # Top 10 least associated with spam
     def leastAssociated(self, prob):
         #heap = createHeap(prob)
@@ -142,16 +135,16 @@ class TestingBayesModel:
         threshold = 1.00009 
         # Testing spam Folder
         print "Testing with binary vector..."
-        self.testModel('spam', pSpam, pNotSpam, probWGivenNotSpam_Bernoulli, probWGivenSpam_Bernoulli, confidenceMatrix_Bernoulli, threshold, modelObj.fetchTokens, 'bernoulli') 
+        self.testModel('spam', pSpam, pNotSpam, probWGivenNotSpam_Bernoulli, probWGivenSpam_Bernoulli, confidenceMatrix_Bernoulli, threshold, modelObj.processCorpus.fetchTokens, 'bernoulli') 
         # Testing notspam Folder
-        self.testModel('notspam', pSpam, pNotSpam, probWGivenNotSpam_Bernoulli, probWGivenSpam_Bernoulli, confidenceMatrix_Bernoulli, threshold, modelObj.fetchTokens, 'bernoulli')
+        self.testModel('notspam', pSpam, pNotSpam, probWGivenNotSpam_Bernoulli, probWGivenSpam_Bernoulli, confidenceMatrix_Bernoulli, threshold, modelObj.processCorpus.fetchTokens, 'bernoulli')
         self.displayAccuracy(confidenceMatrix_Bernoulli)
      
         # Testing Multinomial Model
         threshold = 1.02 #0.595271488128
         print "Testing with raw count vector..."
-        self.testModel('spam', pSpam, pNotSpam, probWGivenNotSpam_Multinomial, probWGivenSpam_Multinomial, confidenceMatrix_Multinomial, threshold, modelObj.fetchTokens, 'multinomial')
-        self.testModel('notspam', pSpam, pNotSpam, probWGivenNotSpam_Multinomial, probWGivenSpam_Multinomial, confidenceMatrix_Multinomial, threshold, modelObj.fetchTokens, 'multinomial')
+        self.testModel('spam', pSpam, pNotSpam, probWGivenNotSpam_Multinomial, probWGivenSpam_Multinomial, confidenceMatrix_Multinomial, threshold, modelObj.processCorpus.fetchTokens, 'multinomial')
+        self.testModel('notspam', pSpam, pNotSpam, probWGivenNotSpam_Multinomial, probWGivenSpam_Multinomial, confidenceMatrix_Multinomial, threshold, modelObj.processCorpus.fetchTokens, 'multinomial')
         self.displayAccuracy(confidenceMatrix_Multinomial)
         self.findTop10(modelObj)
         #print "OB: ", min(ob)

@@ -1,4 +1,3 @@
-from training import TrainingBayesModel
 from binaryTree import BinaryNode
  
 bdt = BinaryNode()
