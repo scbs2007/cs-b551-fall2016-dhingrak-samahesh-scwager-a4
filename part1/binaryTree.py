@@ -42,13 +42,11 @@ class BinaryTree:
             totalPresentSpam = totalNotPresentSpam = totalPresentNonSpam = totalNotPresentNonSpam = 1 #add 1 for smoothing
 #             do to: add statement: if condition holds (e.g. word1 is not in document, word2 is in document, word3, ...etc)
 #             so that only the words that are on this branch are counted
-#             documentDictListSpam: each list element contains a counter dict for each word in a given document.
-#             for bernoulli, simply check whether word is in the counter dict. for multinomial, look at the word's value
             for doc in self.documentDictListNotSpam: #loop through all documents which are not spam
-                if word in doc: totalPresentNonSpam += 1 #count how many have the word
+                if word in doc and check_condition(doc, condition): totalPresentNonSpam += 1 #count how many have the word
                 else: totalNotPresentNonSpam += 1 #count how many don't have the word
             for doc in self.documentDictListSpam: #loop through all documents which are spam
-                if word in doc: totalPresentSpam += 1
+                if word in doc and check_condition(doc, condition): totalPresentSpam += 1
                 else: totalNotPresentSpam += 1
 
             entropy = self.calculateEntropy(totalPresentSpam, totalNotPresentSpam, totalPresentNonSpam, totalNotPresentNonSpam)
@@ -56,6 +54,13 @@ class BinaryTree:
 #             print "word", word, "entropy", entropy
             if entropy < bestEntropy:
                 bestWord, bestEntropy = word, entropy
+        return bestWord, bestEntropy
+        
+    def check_condition(doc, condition):
+        for word, isInDoc in condition.items():
+            if word in doc and not isInDoc or word not in doc and isInDoc:
+                return False
+        return True  
             
     def entropy_Bernoulli(self, positiveCount, totalCount):
         p = positiveCount/totalCount
