@@ -1,6 +1,7 @@
 from __future__ import division
 import math
 from binaryNode import BinaryNode
+from numpy import *
 
 class BinaryTree:
     def __init__(self, processCorpus, spamDocuments, notSpamDocuments):
@@ -29,56 +30,56 @@ class BinaryTree:
         
         leftCondition = {rootWord: 0}
         rightCondition = {rootWord: 1}
+        print "root of binary tree", rootWord
         return self.root
 
     def dtLearningHelp(self, condition, remainingHeight):
         return
 
     def mostImportantWord(self, condition = {}): 
-        bestWord, entropy = "", 1.1
+        bestWord, bestEntropy = "", 1.1
         for word in self.wordList:
-            positiveCountSpam = negativeCountSpam = positiveCountNotSpam = negativeCountNotSpam = 0
-            '''
-            do to: add statement: if condition holds (e.g. word1 is not in document, word2 is in document, word3, ...etc)
-            so that only the words that are on this branch are counted
-            documentDictListSpam: each list element contains a counter dict for each word in a given document.
-            for bernoulli, simply check whether word is in the counter dict. for multinomial, look at the word's value
-            '''
-            if word in self.documentDictListNotSpam: positiveCountNotSpam += 1
-            else: negativeCountNotSpam += 1
-            if word in self.documentDictListSpam: positiveCountSpam += 1
-            else: negativeCountSpam += 1
+            totalPresentSpam = totalNotPresentSpam = totalPresentNonSpam = totalNotPresentNonSpam = 1 #add 1 for smoothing
+#             do to: add statement: if condition holds (e.g. word1 is not in document, word2 is in document, word3, ...etc)
+#             so that only the words that are on this branch are counted
+#             documentDictListSpam: each list element contains a counter dict for each word in a given document.
+#             for bernoulli, simply check whether word is in the counter dict. for multinomial, look at the word's value
+            for doc in self.documentDictListNotSpam: #loop through all documents which are not spam
+                if word in doc: totalPresentNonSpam += 1 #count how many have the word
+                else: totalNotPresentNonSpam += 1 #count how many don't have the word
+            for doc in self.documentDictListSpam: #loop through all documents which are spam
+                if word in doc: totalPresentSpam += 1
+                else: totalNotPresentSpam += 1
+
+            entropy = self.calculateEntropy(totalPresentSpam, totalNotPresentSpam, totalPresentNonSpam, totalNotPresentNonSpam)
             
-            '''
-            next, calculate entropy in the left and right branches. replace bestWord and entropy if the current value is 
-            better
-            '''
-        #self.calculateEntropy("to")
-        pass
+#             print "word", word, "entropy", entropy
+            if entropy < bestEntropy:
+                bestWord, bestEntropy = word, entropy
             
     def entropy_Bernoulli(self, positiveCount, totalCount):
-        p = float(positiveCount)/totalCount
-        return  -(p*log(p) + (1-p)*log(1-p))
-            
-    
-    def calculateEntropy(self, word):
-        totalSpamDocsWithWord = self.wordCountSpam[word] # Number of spam docs which contain the word
-        totalNotSpamDocsWithWord = self.wordCountNotSpam[word] # Number of non spam documents which contain the word
-        totalDocsWithWord = totalSpamDocsWithWord + totalNotSpamDocsWithWord # Number of documents which contain word
+        p = positiveCount/totalCount
+        return  -(p*log2(p) + (1-p)*log2(1-p))
         
-        totalSpamDocsWithoutWord = self.totSpamDocs - totalSpamDocsWithWord # Number of spam documents which do not contain word
-        totalNotSpamDocsWithoutWord = self.totNotSpamDocs - totalNotSpamDocsWithWord # Number of not spam documents which do not contain word
-        totalDocsWithoutWord = totalNotSpamDocsWithoutWord + totalSpamDocsWithoutWord # Number of documents which do not contain word
+    def calculateEntropy(self, totalPresentSpam, totalNotPresentSpam, totalPresentNonSpam, totalNotPresentNonSpam):
+        totalPresent = totalPresentNonSpam + totalPresentSpam #pk1 + nk1, 1: contains word
+        totalNotPresent = totalNotPresentNonSpam + totalNotPresentSpam #pk2 + nk2
+        totalDocs = totalPresent + totalNotPresent
+        return ( totalPresent / totalDocs * self.entropy_Bernoulli(totalPresentNonSpam, totalPresent) +
+                 totalNotPresent / totalDocs * self.entropy_Bernoulli(totalNotPresentNonSpam, totalNotPresent) )
+        
+    '''
+        def calculateEntropy(self, word, totalPresent, totalNotPresentSpam, totalNotPresentNonSpam, totalNotPresent):
 
-        p1 = totalNotSpamDocsWithWord / totalDocsWithWord
-        p2 = totalSpamDocsWithWord / totalDocsWithWord
-        p3 = totalSpamDocsWithoutWord / totalDocsWithoutWord
-        p4 = totalNotSpamDocsWithoutWord / totalDocsWithoutWord
-
-        p1 = p1 * math.log(p1) if p1 != 0 else p1
-        p2 = p2 * math.log(p2) if p2 != 0 else p2
-        p3 = p3 * math.log(p3) if p3 != 0 else p3
-        p4 = p4 * math.log(p4) if p4 != 0 else p4
-
-        #print p1, p2, p3, p4 
-        return (totalDocsWithWord / self.totTrainingDocs) * (- p1 - p2) + (totalDocsWithoutWord / self.totTrainingDocs) * (- p3 - p4)
+            entropy = totalPresent / self.totTrainingDocs * (- self.wordCountNotSpam[word]/totalPresent * log (self.wordCountNotSpam[word]/ totalPresent)
+                                     - self.wordCountSpam[word]/totalPresent * log (self.wordCountSpam[word]/ totalPresent)
+                                    ) 
+                                    +
+                 totalNotPresent / self.totTrainingDocs *	(- totalNotPresentSpam/totalNotPresent * log (totalNotPresentSpam/totalNotPresent)
+                                     - totalNotPresentNonSpam/totalNotPresent * log (totalNotPresentSpam/totalNotPresent)
+                                    )              
+            return entropy  
+                    
+    #         and you get self.whatever from the bayes object
+    '''
+        
