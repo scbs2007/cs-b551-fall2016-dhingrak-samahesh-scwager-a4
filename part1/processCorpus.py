@@ -23,11 +23,102 @@ class ProcessCorpus:
         self.totSpamDocs = 0
         self.totWordsInSpam = 0
         self.totTrainingDocs = 0
+        # http://xpo6.com/list-of-english-stop-words/
+        self.stopWords = set(["a", "about", "above", "across", "after", "afterwards", "again", "against", "all", "almost", "alone", "along", "already", "also", \
+                        "although", "always", "am", "among", "amongst", "amoungst", "amount", "an", "and", "another", "any", "anyhow", "anyone", "anything",\
+                        "anyway", "anywhere", "are", "around", "as", "at", "back", "be", "became", "because", "become", "becomes", "becoming", "been", "before", \
+                        "beforehand", "behind", "being", "below", "beside", "besides", "between", "beyond", "bill", "both", "bottom", "but", "by", "call", "can", \
+                        "cannot", "cant", "co", "con", "could", "couldnt", "cry", "de", "describe", "detail", "do", "done", "down", "due", "during", "each", "eg", \
+                        "eight", "either", "eleven", "else", "elsewhere", "empty", "enough", "etc", "even", "ever", "every", "everyone", "everything", \
+                        "everywhere", "except", "few", "fifteen", "fify", "fill", "find", "fire", "first", "five", "for", "former", "formerly", "forty", "found", \
+                        "four", "from", "front", "full", "further", "get", "give", "go", "had", "has", "hasnt", "have", "he", "hence", "her", "here", "hereafter",\
+                        "hereby", "herein", "hereupon", "hers", "herself", "him", "himself", "his", "how", "however", "hundred", "ie", "if", "in", "inc", \
+                        "indeed", "interest", "into", "is", "it", "its", "itself", "keep", "last", "latter", "latterly", "least", "less", "ltd", "made", "many", \
+                        "may", "me", "meanwhile", "might", "mill", "mine", "more", "moreover", "most", "mostly", "move", "much", "must", "my", "myself", "name", \
+                        "namely", "neither", "never", "nevertheless", "next", "nine", "no", "nobody", "none", "noone", "nor", "not", "nothing", "now", "nowhere", \
+                        "of", "off", "often", "on", "once", "one", "only", "onto", "or", "other", "others", "otherwise", "our", "ours", "ourselves", "out", "over",\
+                        "own","part", "per", "perhaps", "please", "put", "rather", "re", "same", "see", "seem", "seemed", "seeming", "seems", "serious", "several",\
+                        "she", "should", "show", "side", "since", "sincere", "six", "sixty", "so", "some", "somehow", "someone", "something", "sometime", \
+                        "sometimes", "somewhere", "still", "such", "system", "take", "ten", "than", "that", "the", "their", "them", "themselves", "then", \
+                        "thence", "there", "thereafter", "thereby", "therefore", "therein", "thereupon", "these", "they", "thick", "thin", "third", "this", \
+                        "those", "though", "three", "through", "throughout", "thru", "thus", "to", "together", "too", "top", "toward", "towards", "twelve", \
+                        "twenty", "two", "un", "under", "until", "up", "upon", "us", "very", "via", "was", "we", "well", "were", "what", "whatever", "when", \
+                        "whence", "whenever", "where", "whereafter", "whereas", "whereby", "wherein", "whereupon", "wherever", "whether", "which", "while", \
+                        "whither", "who", "whoever", "whole", "whom", "whose", "why", "will", "with", "within", "without", "would", "yet", "you", "your", \
+                        "yours", "yourself", "yourselves", "the", \
+                        'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat',\
+                        'ist', 'edt',\
+                        'xml', 'html', \
+                        'cc', 'arial', 'helvetica', 'sans-serif', 'mv', 'smtp', 'localhost']) 
+        # Words related to email
+        self.unwanted = set(['arial', 'Content-Transfer-Encoding:', 'Content-Type:', 'Date:', 'Delivered-To:', 'Errors-To:', 'ESMTP', \
+                            'font-family:', 'font-weight:', 'font-size:', 'Forwarded-by:', \
+                            'From:', 'IMAP', \
+                            'List-Archive:', 'List-Help:', 'List-Id:', 'List-Post:', 'List-Subscribe:', 'List-Unsubscribe:', 'MIME-Version:', \
+                            'Mailing-List:', 'Message-Id:', 'Old-Return-Path:', 'Organization:', '(Postfix)', 'Precedence:', 'Received:', 'References:', \
+                            'Reply-To:', 'Resent-Date:', 'Resent-Sender:', 'Return-Path:', 'RPM-List', 'Subject:', 'To:', 'URL:', 'User-Agent:', 'verdana', \
+                            'X-Accept-Language:', \
+                            'X-Apparently-To:', 'X-Beenthere:X-Mailman-Version:', 'X-Bulkmail:', 'X-Egroups-Return:', 'X-Keywords', \
+                            'X-Mailer', 'X-Originalarrivaltime:', \
+                            'X-Priority', 'X-Pyzor:', \
+                            'X-Sender:', 'X-Spam-Level:', 'X-Spam-Status:', 'X-Yahoo-Profile:', 'localhost' \
+                            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' \
+                            'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']) 
 
+    def splitOnPunctuations(self, token, regex):
+        return regex.sub('#', token).split('#')
+    
+    def checkUnwanted(self, token):
+        if token in self.unwanted:
+            return False 
+        return True
+        
+    def toConsiderOrNotToConsider(self, word):
+
+        if word in self.stopWords:
+            return False
+        if word == '' and re.match("^[\w\d_-]*$", word) == False:
+            return False
+
+        if str.isdigit(word):
+            return False
+         
+        if len(word) > 10:
+            return False
+
+        return True
+
+    # This function is used in bayesTesting.py too
     def fetchTokens(self, document):
+        # TODO 
+        tokens = []
+        regex = re.compile('[%s]' % re.escape(string.punctuation))
+        flag = True
+        for token in document.read().split():
+            if flag:
+                if token == 'Subject:':
+                    flag = False
+            
+            # Remove HTML tags and URLs
+            if ('<' in token or '>' in token) or token.startswith('http://') or self.checkUnwanted(token) == False:
+                #print token
+                continue
+
+            #for entry in self.splitOnPunctuations(token, regex):
+            token = str.lower(str.lstrip(str.rstrip(token, string.punctuation), string.punctuation))
+            if self.toConsiderOrNotToConsider(token):
+                    tokens.append(token)
+        return tokens
+
+    def fetchTokens2(self, document):
         # Currently considering words after splitting on space and removing all punctuations. all lower case.
         # TODO - Improve word check. words to use (not number, URL)
         return [str.lower(token.translate(None, string.punctuation)) for token in document.read().split()]
+    
+    def filterWord(self, word):
+        if word != '' and re.match("^[\w\d_-]*$", word) and word not in self.stopWords:
+            return False 
+        return True
 
     # Counts w|c for both bernoulli and multinomial; total number of words in a document
     def countWordsInDocument(self, wordFreqMultinomial, wordFreqBernoulli, document):
@@ -62,7 +153,7 @@ class ProcessCorpus:
         for entry in count:
             count[entry] += 1
     
-    # Adds words missing in class2 but present in class1, to class2 with count 1
+    # Adds words missing in class2 but present in class1, to class2 with count 0 
     def addWord(self, count1, count2):
         count1keys = count1.elements()
         count2keys = count2.elements()
@@ -70,60 +161,66 @@ class ProcessCorpus:
             if entry not in count2keys:
                 count2[entry] = 0 
         #print "BEFORE: ", count2
-        self.increaseCountForWords(count2) #Adding 1 to all counts
+        #self.increaseCountForWords(count2) #Adding 1 to all counts
         #print "AFTER: ", count2
 
     def smoothCounts(self, wordCountInSpam_Multinomial, wordCountInNotSpam_Multinomial, wordCountInSpam_Bernoulli, wordCountInNotSpam_Bernoulli):
         print "Smoothing."
-        #self.addWord(wordCountInNotSpam_Multinomial, wordCountInSpam_Multinomial)
-        #self.addWord(wordCountInSpam_Multinomial, wordCountInNotSpam_Multinomial)
+        self.addWord(wordCountInNotSpam_Multinomial, wordCountInSpam_Multinomial)
+        self.addWord(wordCountInSpam_Multinomial, wordCountInNotSpam_Multinomial)
+        
+        self.addWord(wordCountInNotSpam_Bernoulli, wordCountInSpam_Bernoulli)
+        self.addWord(wordCountInSpam_Bernoulli, wordCountInNotSpam_Bernoulli)
+        
         self.increaseCountForWords(wordCountInSpam_Bernoulli)
         self.increaseCountForWords(wordCountInNotSpam_Bernoulli)
+        
         self.increaseCountForWords(wordCountInSpam_Multinomial)
         self.increaseCountForWords(wordCountInNotSpam_Multinomial)
+        #print wordCountInSpam_Bernoulli
+        #print wordCountInNotSpam_Bernoulli
+        #print wordCountInSpam_Multinomial
+        #print wordCountInNotSpam_Multinomial
    
-    def filterWord(self, word):
-        if word != '' and re.match("^[\w\d_-]*$", word):
-            return False 
-        return True
         
     # Removing words with frequency lower than 5 from consideration
-    def removeLowFreqWords(self, wordCount):
-         for entry in wordCount.keys():
-            if wordCount[entry] < 6:
-                del wordCount[entry]
-   
+    def deleteWordUpdateCount(self, entry):
+        # Delete word from allWordsInCorpus
+        self.allWordsInCorpus.discard(entry)
+
+        #Update Spam Word Count
+        self.totWordsInSpam -= self.wordCountInSpam_Multinomial[entry]
+        # remove entry from Bernoulli and Multinomial
+        del self.wordCountInSpam_Multinomial[entry]
+        del self.wordCountInSpam_Bernoulli[entry]
+       
+        # Same steps for not spam docs 
+        self.totWordsInNotSpam -= self.wordCountInNotSpam_Multinomial[entry]
+        del self.wordCountInNotSpam_Multinomial[entry]
+        del self.wordCountInNotSpam_Bernoulli[entry]
+
+    # If from the initial Count of the words in spam/ non spam document - the count is less than 10 remove them.
+    # And update both multinomial and bernoulli counters + the word counts
     def lowFrequency(self):
-        self.removeLowFreqWords(self.wordCountInNotSpam_Multinomial)
-        self.removeLowFreqWords(self.wordCountInSpam_Multinomial)
-        self.removeLowFreqWords(self.wordCountInSpam_Bernoulli)
-        self.removeLowFreqWords(self.wordCountInNotSpam_Bernoulli)
+        for entry in list(self.allWordsInCorpus):
+            if self.wordCountInNotSpam_Multinomial[entry] + self.wordCountInSpam_Multinomial[entry] < 10:
+                self.deleteWordUpdateCount(entry)
          
-    '''
-    def wordsContainingNumbers(self):
-
-    def numbers(self):
-        self.wordsContainingNumbers(self.wordCountInNotSpam_Multinomial)
-        self.wordsContainingNumbers(self.wordCountInSpam_Multinomial)
-        self.wordsContainingNumbers(self.wordCountInSpam_Bernoulli)
-        self.wordsContainingNumbers(self.wordCountInNotSpam_Bernoulli)
-    '''    
-
     def removeWordsFromConsideration(self):
         self.lowFrequency()
-        #self.numbers()
+        #self.removeNumbers()
 
     def calculate(self):
         self.totNotSpamDocs, self.totWordsInNotSpam = self.creatingVector(self.wordCountInNotSpam_Multinomial, self.wordCountInNotSpam_Bernoulli, 'notspam')
         self.totSpamDocs, self.totWordsInSpam = self.creatingVector(self.wordCountInSpam_Multinomial, self.wordCountInSpam_Bernoulli, 'spam')
+        self.removeWordsFromConsideration()
+        
         # + 2 for smoothing
         self.totSpamDocs += 2
         self.totNotSpamDocs += 2
         self.totTrainingDocs = self.totNotSpamDocs + self.totSpamDocs
         
         self.smoothCounts(self.wordCountInNotSpam_Multinomial, self.wordCountInSpam_Multinomial, self.wordCountInSpam_Bernoulli, self.wordCountInNotSpam_Bernoulli)
-        self.removeWordsFromConsideration()
-        # TODO: Forgot to update Word Count - after removing words from consideration
 
     def getWordsInDocument(self, document):
         documentDict = Counter()
@@ -138,5 +235,4 @@ class ProcessCorpus:
         for fileName in os.listdir(directoryPath):
             with open(directoryPath + '/' + fileName) as document:
                 documentDictList.append(self.getWordsInDocument(document))
-
 

@@ -30,4 +30,3 @@ class TrainingTreeModel:
         self.naryTree = NaryTree(self.processCorpus)
         self.naryTree.train()
 
-        

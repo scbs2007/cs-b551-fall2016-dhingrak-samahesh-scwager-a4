@@ -6,7 +6,7 @@ from processCorpus import ProcessCorpus
 class TrainingBayesModel:
     def __init__(self, directory):
         self.directory = directory
-	self.processCorpus = ProcessCorpus(directory)
+        self.processCorpus = ProcessCorpus(directory)
         self.totTrainingDocs = 0
         self.pSpam = 0
         self.pNotSpam = 0
