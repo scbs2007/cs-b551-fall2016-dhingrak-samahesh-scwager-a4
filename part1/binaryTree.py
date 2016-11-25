@@ -21,14 +21,14 @@ class BinaryTree:
         self.documentDictListSpam = spamDocuments 
         self.documentDictListNotSpam = notSpamDocuments
 
-    def dtLearning(self, maxHeight = 1):
+    def dtLearning(self, maxHeight = 2):
         print "Training Binary Decision Tree Model."
         rootWord = self.mostImportantWord()
         self.root = BinaryNode(attribute = rootWord)
         
         #print self.documentDictListSpam[0]
         
-        leftCondition = {rootWord: 0}
+        self.root.left = dtleftCondition = {rootWord: 0}
         rightCondition = {rootWord: 1}
         print "root of binary tree", rootWord
         return self.root
