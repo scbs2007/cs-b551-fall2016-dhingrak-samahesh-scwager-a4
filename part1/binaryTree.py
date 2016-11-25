@@ -19,7 +19,7 @@ class BinaryTree:
         '''
         self.documentDictListSpam = spamDocuments 
         self.documentDictListNotSpam = notSpamDocuments
-
+        self.height = 0
     def dtLearningHelp(self, condition, remainingHeight):
         return
 
@@ -31,7 +31,6 @@ class BinaryTree:
         root.setIgnoreWords(set([rootWord]))
         root.setSpamDocsIndexes(*self.createDocsIndexListForRoot(self.documentDictListSpam, rootWord))
         root.setNotSpamDocsIndexes(*self.createDocsIndexListForRoot(self.documentDictListNotSpam, rootWord))
-        # TODO: Add Checks here - the tree cannot be built further.
         self.buildTree(root)
         self.root = root
         
@@ -58,13 +57,13 @@ class BinaryTree:
                 withWord.append(index)
             else:
                 withoutWord.append(index)
-        if len(withWord) == 0 and len(withoutWord) == 0:
-            return [[], []]
+        #if len(withWord) == 0 and len(withoutWord) == 0:
+        #    return [[], []]
         return [withWord, withoutWord]
     
     def buildTree(self, node):
         print "Current Node: ", node.attribute
-        sys.exit(0) 
+        #sys.exit(0)
         # No subset of records found
         if self.checkNoSubset(node.indexSpamDocsWithWord, node.indexSpamDocsWithoutWord, node.indexNotSpamDocsWithWord, node.indexNotSpamDocsWithoutWord): 
             self.setDecision(node)
@@ -84,7 +83,7 @@ class BinaryTree:
             leafNode = BinaryNode(decision=sameClass[1])
             self.insert(node, 'left', leafNode)
         else:
-            leftWord = self.findBestSplitNode(node, 'left') #.indexSpamDocsWithoutWord, node.indexNotSpamDocsWithoutWord)
+            leftWord = self.findBestSplitNode(node, 'left') 
             self.insert(node, 'left', leftWord)
             self.buildTree(node.left)
 
@@ -98,7 +97,7 @@ class BinaryTree:
             self.insert(node, 'right', leafNode)
             return
         else:
-            rightWord = self.findBestSplitNode(node, 'right') #.indexSpamDocsWithWord, node.indexNotSpamDocsWithWord)
+            rightWord = self.findBestSplitNode(node, 'right') 
             self.insert(node, 'right', rightWord)
             self.buildTree(node.right)
        
@@ -192,9 +191,11 @@ class BinaryTree:
             node.left = newNode
         elif sideToInsert == 'right':
             node.right = newNode
+        '''
         else: 
             raise ValueError('need to insert binary decision node to the "left" or "right".')
-        
+        '''
+
     def findWordEntropy(self, argument):
         word, indexSpamDocs, indexNotSpamDocs = argument
         positiveCountSpam = 0
@@ -295,7 +296,7 @@ class BinaryTree:
 
         #print p1, p2, p3, p4
         return (totalDocsWithWord / self.totTrainingDocs) * (- p1 - p2) + (totalDocsWithoutWord / self.totTrainingDocs) * (- p3 - p4)
-    
+   
     def display(self, depth = 0):
         print "depth: ", depth
         if self.attribute:

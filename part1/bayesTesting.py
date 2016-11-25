@@ -1,6 +1,5 @@
 from __future__ import division
 import os, string, math, heapq
-from operator import itemgetter
 from collections import Counter
 
 #ob = []

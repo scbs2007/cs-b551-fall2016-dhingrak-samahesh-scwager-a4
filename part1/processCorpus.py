@@ -45,25 +45,23 @@ class ProcessCorpus:
                         "twenty", "two", "un", "under", "until", "up", "upon", "us", "very", "via", "was", "we", "well", "were", "what", "whatever", "when", \
                         "whence", "whenever", "where", "whereafter", "whereas", "whereby", "wherein", "whereupon", "wherever", "whether", "which", "while", \
                         "whither", "who", "whoever", "whole", "whom", "whose", "why", "will", "with", "within", "without", "would", "yet", "you", "your", \
-                        "yours", "yourself", "yourselves", "the", \
-                        'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat',\
-                        'ist', 'edt',\
-                        'xml', 'html', \
-                        'cc', 'arial', 'helvetica', 'sans-serif', 'mv', 'smtp', 'localhost']) 
+                        "yours", "yourself", "yourselves", "the" \
+                        ])
         # Words related to email
-        self.unwanted = set(['arial', 'Content-Transfer-Encoding:', 'Content-Type:', 'Date:', 'Delivered-To:', 'Errors-To:', 'ESMTP', \
-                            'font-family:', 'font-weight:', 'font-size:', 'Forwarded-by:', \
-                            'From:', 'IMAP', \
-                            'List-Archive:', 'List-Help:', 'List-Id:', 'List-Post:', 'List-Subscribe:', 'List-Unsubscribe:', 'MIME-Version:', \
-                            'Mailing-List:', 'Message-Id:', 'Old-Return-Path:', 'Organization:', '(Postfix)', 'Precedence:', 'Received:', 'References:', \
-                            'Reply-To:', 'Resent-Date:', 'Resent-Sender:', 'Return-Path:', 'RPM-List', 'Subject:', 'To:', 'URL:', 'User-Agent:', 'verdana', \
-                            'X-Accept-Language:', \
-                            'X-Apparently-To:', 'X-Beenthere:X-Mailman-Version:', 'X-Bulkmail:', 'X-Egroups-Return:', 'X-Keywords', \
-                            'X-Mailer', 'X-Originalarrivaltime:', \
-                            'X-Priority', 'X-Pyzor:', \
-                            'X-Sender:', 'X-Spam-Level:', 'X-Spam-Status:', 'X-Yahoo-Profile:', 'localhost' \
-                            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' \
-                            'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']) 
+        self.unwanted = set(['(Postfix)', 'Apr', 'Aug', 'Content-Transfer-Encoding:', 'Content-Type:', 'Date:', 'Dec', 'Delivered-To:', 'ESMTP', 'Errors-To:', \
+                     'Feb', 'Forwarded-by:', 'From:', 'IMAP', 'In-Reply-To:', 'Jan', 'Jul', 'Jun', 'List-Archive:', 'List-Help:', 'List-Id:', 'List-Post:', \
+                     'List-Subscribe:', 'List-Unsubscribe:', 'MIME-Version:', 'Mailing-List:', 'Mar', 'May', 'Message-Id:', 'Nov', 'Oct', 'Old-Return-Path:',\
+                     'Organization:', 'Precedence:', 'RPM-List', 'Received:', 'References:', 'Reply-To:', 'Resent-Date:', 'Resent-Sender:', 'Return-Path:', \
+                     'Sep', 'Subject:', 'To:', 'URL:', 'User-Agent:', 'X-Accept-Language:', 'X-Apparently-To:', 'X-Beenthere:X-Mailman-Version:', \
+                     'X-Bulkmail:', 'X-Egroups-Return:', 'X-Keywords', 'X-Mimeole:', 'X-Pyzor:', 'X-Sender:', 'X-Spam-Level:', 'X-Spam-Status:', \
+                     'X-Yahoo-Profile:', 'arial', 'cc', 'debian', 'edt', 'esmtp', 'exmh', 'font-family:', 'font-size:', 'font-weight:', 'freshrpms', 'fri', 'gmt', \
+                     'helvetica', 'html', 'ist', 'localhost', 'message-id', 'mon', 'mv', 'nbsp', 'pdt', 'perl', 'pgp', 'qmail', 'rpm', 'sans-serif', 'sat', \
+                     'single-drop', 'smtp', 'spambayes', 'sun', 'thu', 'tue', 'unix', 'verdana', 'wed', 'x-beenthere', 'x-mailer', 'x-mailscanner', \
+                     'x-originalarrivaltime:', 'x-priority', 'x-status', 'x-uid', 'xml'])
+                            
+ 
+        # If token contains any of these - ignore it.
+        self.remove = set(['!', '\\', '/', ',', '.', '@', '=', '[', ']', '(', ')', ':', ';', '?', '^', '{', '}', '|', '<', '>', '"', '#', '%', '&', '+', '`', '~', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
 
     def splitOnPunctuations(self, token, regex):
         return regex.sub('#', token).split('#')
@@ -75,15 +73,22 @@ class ProcessCorpus:
         
     def toConsiderOrNotToConsider(self, word):
 
+        if word in self.unwanted:
+            return False 
+
         if word in self.stopWords:
             return False
-        if word == '' and re.match("^[\w\d_-]*$", word) == False:
+        
+        if word == '':
             return False
+       
+        if any(ch in self.remove for ch in word):
+            return False 
 
         if str.isdigit(word):
             return False
          
-        if len(word) > 10:
+        if len(word) > 15 or len(word) < 3:
             return False
 
         return True
@@ -92,47 +97,37 @@ class ProcessCorpus:
     def fetchTokens(self, document):
         # TODO 
         tokens = []
-        regex = re.compile('[%s]' % re.escape(string.punctuation))
+        #regex = re.compile('[%s]' % re.escape(string.punctuation))
         flag = True
         for token in document.read().split():
-            if flag:
+            '''if flag:
                 if token == 'Subject:':
                     flag = False
-            
+                continue
+            '''
             # Remove HTML tags and URLs
-            if ('<' in token or '>' in token) or token.startswith('http://') or self.checkUnwanted(token) == False:
+            if self.checkUnwanted(token) == False or ('<' in token or '>' in token) or token.startswith('http://'):
                 #print token
                 continue
 
-            #for entry in self.splitOnPunctuations(token, regex):
+            #    for entry in self.splitOnPunctuations(token, regex):
             token = str.lower(str.lstrip(str.rstrip(token, string.punctuation), string.punctuation))
             if self.toConsiderOrNotToConsider(token):
                     tokens.append(token)
         return tokens
-
-    def fetchTokens2(self, document):
-        # Currently considering words after splitting on space and removing all punctuations. all lower case.
-        # TODO - Improve word check. words to use (not number, URL)
-        return [str.lower(token.translate(None, string.punctuation)) for token in document.read().split()]
-    
-    def filterWord(self, word):
-        if word != '' and re.match("^[\w\d_-]*$", word) and word not in self.stopWords:
-            return False 
-        return True
 
     # Counts w|c for both bernoulli and multinomial; total number of words in a document
     def countWordsInDocument(self, wordFreqMultinomial, wordFreqBernoulli, document):
         flag = set() # Keeps track of word that has already been counted once for a particular document - For Bernoulli Model
         count = 0 # Counts total number of words in document
         for entry in self.fetchTokens(document):
-            if not self.filterWord(entry):
-                count += 1
-                self.allWordsInCorpus.add(entry)
-                wordFreqMultinomial[entry] += 1
-                if entry in flag:
-                    continue
-                wordFreqBernoulli[entry] += 1
-                flag.add(entry)
+            count += 1
+            self.allWordsInCorpus.add(entry)
+            wordFreqMultinomial[entry] += 1
+            if entry in flag:
+                continue
+            wordFreqBernoulli[entry] += 1
+            flag.add(entry)
         return count
 
     def creatingVector(self, wordFreqMultinomial, wordFreqBernoulli, classType):
@@ -165,7 +160,7 @@ class ProcessCorpus:
         #print "AFTER: ", count2
 
     def smoothCounts(self, wordCountInSpam_Multinomial, wordCountInNotSpam_Multinomial, wordCountInSpam_Bernoulli, wordCountInNotSpam_Bernoulli):
-        print "Smoothing."
+        print "Smoothing word counts..."
         self.addWord(wordCountInNotSpam_Multinomial, wordCountInSpam_Multinomial)
         self.addWord(wordCountInSpam_Multinomial, wordCountInNotSpam_Multinomial)
         
@@ -225,8 +220,7 @@ class ProcessCorpus:
     def getWordsInDocument(self, document):
         documentDict = Counter()
         for entry in self.fetchTokens(document):
-            if not self.filterWord(entry):
-                documentDict[entry] += 1
+            documentDict[entry] += 1
         return documentDict
 
     def getWordsInAllDocuments(self, documentDictList, classType):

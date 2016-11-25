@@ -1,5 +1,3 @@
-from training import TrainModel
-
 class BinaryNode:
     def __init__(self, attribute = None, decision = None):
         self.attribute = attribute # Attribute is the chosen word
