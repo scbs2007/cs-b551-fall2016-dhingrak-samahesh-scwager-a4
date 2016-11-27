@@ -8,6 +8,10 @@ All file reading in this class
 class ProcessCorpus:
     def __init__(self, directory):
         self.directory = directory
+        self.docsAndWords = Counter() # stores the number of words and the number of documents for all topics as tuples.
+        self.wordCountMapping = Counter() # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
+        self.totalDocs = 0
+  
         # http://xpo6.com/list-of-english-stop-words/
         self.stopWords = set(["a", "about", "above", "across", "after", "afterwards", "again", "against", "all", "almost", "alone", "along", "already", "also", \
                         "although", "always", "am", "among", "amongst", "amoungst", "amount", "an", "and", "another", "any", "anyhow", "anyone", "anything",\
@@ -99,23 +103,29 @@ class ProcessCorpus:
             #print "File: ", fileName
             #for entry in wordCountInDocs:
             #    print entry, wordCountInDocs[entry]
+        self.totalDocs += docCount
         return (docCount, wordCount)
 
     def calculate(self):
         topics = [os.path.join(self.directory, topicName) for topicName in os.listdir(self.directory) if os.path.isdir(os.path.join(self.directory, topicName))]
-        #print topics
+        '''
         docsAndWords = Counter() # stores the number of words and the number of documents for all topics as tuples.
         wordCountMapping = Counter() # stores key = topic name, value = Counter object reference
+        '''
+        self.totalDocs = 0
         for topic in topics:
             print "Counting words in topic: ", topic
             wordFreq = Counter()
-            docsAndWords[topic] = self.creatingVector(wordFreq, topic)
-            wordCountMapping[topic] = wordFreq
+            self.docsAndWords[topic] = self.creatingVector(wordFreq, topic)
+            self.wordCountMapping[topic] = wordFreq
         print "Words counted in all documents in all topics!"
-        #print wordCountMapping[topics[0]]['hercules']
+        '''#print wordCountMapping[topics[0]]['hercules']'''
+        #print self.wordCountMapping[topics[0]]['hercules']
 
+'''
 def main():
     pc = ProcessCorpus("./train")
     pc.calculate()
 
 main()
+'''
