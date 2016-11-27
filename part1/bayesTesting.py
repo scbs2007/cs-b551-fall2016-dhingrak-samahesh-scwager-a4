@@ -10,7 +10,7 @@ class TestingBayesModel:
         self.directory = directory
 
     def displayAccuracy(self, confidenceMatrix):
-        print "\n\nAccuracy Percentage: ", round((confidenceMatrix[0] + confidenceMatrix[3]) * 100.0 / sum(confidenceMatrix), 2)
+        print "\nAccuracy Percentage: ", round((confidenceMatrix[0] + confidenceMatrix[3]) * 100.0 / sum(confidenceMatrix), 2)
         print "Confidence Matrix: "
         print "True Positive: ", confidenceMatrix[0]
         print "False Negative: ", confidenceMatrix[1] 
@@ -40,7 +40,7 @@ class TestingBayesModel:
         return result + math.log(pClass)
 
     def bernoulliThresh(self, oddsRatio, confidenceMatrix, threshold, classType):
-        if oddsRatio > threshold:
+        if oddsRatio < threshold:
             #print "Predicted - Spam"
             if classType == 'spam':
                 confidenceMatrix[0] += 1
@@ -54,7 +54,7 @@ class TestingBayesModel:
                 confidenceMatrix[3] += 1
         
     def multinomialThresh(self, oddsRatio, confidenceMatrix, threshold, classType):
-        if oddsRatio > threshold:
+        if oddsRatio < threshold:
             #print "Predicted - Spam"
             if classType == 'spam':
                 confidenceMatrix[0] += 1
@@ -74,8 +74,8 @@ class TestingBayesModel:
             with open(directoryPath + '/' + fileName) as document:
                 wordCount = fetchTokens(document)
 
-                probIsSpam = self.calculateProbWordsGivenS(probWGivenNotSpam, wordCount, pNotSpam)
-                probIsNotSpam = self.calculateProbWordsGivenS(probWGivenSpam, wordCount, pSpam)
+                probIsNotSpam = self.calculateProbWordsGivenS(probWGivenNotSpam, wordCount, pNotSpam)
+                probIsSpam = self.calculateProbWordsGivenS(probWGivenSpam, wordCount, pSpam)
                 
                 #print "\nFile Name: ", fileName, "Type: ", classType
                 oddsRatio = probIsSpam/probIsNotSpam
@@ -111,37 +111,11 @@ class TestingBayesModel:
                 (model.processCorpus.totWordsInNotSpam + model.processCorpus.totWordsInSpam)
             probSW[word] = probWS[word] * probS / probW
 
-        print "Top 10 words most associated with spam: "
+        print "\nTop 10 words most associated with spam: "
         self.displayList(self.mostAssociated(probSW))
 
         print "Top 10 words least associated with spam: "
         self.displayList(self.leastAssociated(probSW))
-        '''
-        prob1 = model.probWGivenSpam_Multinomial
-        prob2 = model.probWGivenSpam_Bernoulli
-        
-        prob3 = model.probWGivenNotSpam_Multinomial
-        prob4 = model.probWGivenNotSpam_Bernoulli
-
-        probSpam = model.pSpam
-        pNotSpam = model.pNotSpam
-        
-        set1 = self.mostAssociated(prob1)
-        set2 = self.mostAssociated(prob2)
-        print "Top 10 words most associated with spam: " 
-        print "Multinomial: "
-        self.displayList(set1)
-        print "Bernoulli: "
-        self.displayList(set2)
-
-        set3 = self.leastAssociated(prob3)
-        set4 = self.leastAssociated(prob4)
-        print "\n\nTop 10 words least associated with spam: "
-        print "Multinomial: "
-        self.displayList(set3)
-        print "Bernoulli: "
-        self.displayList(set4)
-        '''
              
     def testDocuments(self, modelObj):
         pSpam = modelObj.pSpam
@@ -156,7 +130,7 @@ class TestingBayesModel:
         confidenceMatrix_Multinomial = [0, 0, 0, 0]      
 
         # Testing Bernoulli Model
-        threshold = 0.4509 
+        threshold = 2.1 #2.10000001
 
         # Testing spam Folder
         print "Testing with binary vector..."
@@ -166,9 +140,10 @@ class TestingBayesModel:
         self.testModel('notspam', pSpam, pNotSpam, probWGivenNotSpam_Bernoulli, probWGivenSpam_Bernoulli, confidenceMatrix_Bernoulli, threshold, modelObj.processCorpus.fetchTokens, 'bernoulli')
         self.displayAccuracy(confidenceMatrix_Bernoulli)
         
+        
         # Testing Multinomial Model
-        threshold = 1.5808 #0.595271488128
-        print "Testing with raw count vector..."
+        threshold = .64999 
+        print "\n\nTesting with raw count vector..."
         self.testModel('spam', pSpam, pNotSpam, probWGivenNotSpam_Multinomial, probWGivenSpam_Multinomial, confidenceMatrix_Multinomial, \
                         threshold, modelObj.processCorpus.fetchTokens, 'multinomial')
 
@@ -180,5 +155,4 @@ class TestingBayesModel:
         #print "OB: max", max(ob)
         #print "OM: ", min(om)
         #print "OM: max ", max(om)
-
 

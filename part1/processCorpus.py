@@ -206,6 +206,7 @@ class ProcessCorpus:
         #self.removeNumbers()
 
     def calculate(self):
+        print "Reading Files..."
         self.totNotSpamDocs, self.totWordsInNotSpam = self.creatingVector(self.wordCountInNotSpam_Multinomial, self.wordCountInNotSpam_Bernoulli, 'notspam')
         self.totSpamDocs, self.totWordsInSpam = self.creatingVector(self.wordCountInSpam_Multinomial, self.wordCountInSpam_Bernoulli, 'spam')
         self.removeWordsFromConsideration()
