@@ -1,5 +1,5 @@
 from __future__ import division
-import math, itertools
+import math, itertools, sys
 from binaryNode import BinaryNode
 #from multiprocessing.pool import Pool as ThreadPool
 
@@ -19,24 +19,21 @@ class BinaryTree:
         '''
         self.documentDictListSpam = spamDocuments 
         self.documentDictListNotSpam = notSpamDocuments
-        self.height = 0
-    def dtLearningHelp(self, condition, remainingHeight):
-        return
 
-    def dtLearning(self, maxHeight = 2):
-        print "Training Binary Decision Tree Model."
+    def dtLearning(self):
+        print "Training Binary Decision Tree Model... Please wait..."
         #pool = ThreadPool(10) # Thread pool 
         rootWord = self.mostImportantWordForRoot() # Split on this word #print rootWord
         root = BinaryNode(attribute=rootWord)
         root.setIgnoreWords(set([rootWord]))
         root.setSpamDocsIndexes(*self.createDocsIndexListForRoot(self.documentDictListSpam, rootWord))
         root.setNotSpamDocsIndexes(*self.createDocsIndexListForRoot(self.documentDictListNotSpam, rootWord))
-        self.buildTree(root)
+        maxTreeHeight = 21 # Height uptil which tree is to be built - Found this value via experimenting for max accuracy.
+        self.buildTree(root, maxTreeHeight)
         self.root = root
-        self.root.left = dtleftCondition = {rootWord: 0}
-        rightCondition = {rootWord: 1}
-        print "root of binary tree", rootWord
-        return self.root
+        
+        #pool.close()
+        #pool.join()
 
     def createDocsIndexListForRoot(self, documents, attribute):
         withWord = []
@@ -60,17 +57,23 @@ class BinaryTree:
         #    return [[], []]
         return [withWord, withoutWord]
     
-    def buildTree(self, node):
-        print "Current Node: ", node.attribute
+    def buildTree(self, node, height):
+        #print "Current Node: ", node.attribute
         #sys.exit(0)
+       
+        if height == 0:
+            self.setDecision(node)
+            return
+        
         # No subset of records found
         if self.checkNoSubset(node.indexSpamDocsWithWord, node.indexSpamDocsWithoutWord, node.indexNotSpamDocsWithWord, node.indexNotSpamDocsWithoutWord): 
+            #print "No subset found"
             self.setDecision(node)
             return 
         
         # If there are no more words to split on
         if self.checkAllWordsUsed(node.ignoreWords):
-            print "No More words to split on"
+            #print "No More words to split on"
             self.setDecision(node)
             return
 
@@ -78,27 +81,27 @@ class BinaryTree:
         sameClass = self.checkIfSameClassLeft(node)
         if sameClass[0] == True:
         # Do the records belong to the same class? No need to build the tree further
-            print "All records same class: ", sameClass[1]
+            #print "All records in this node belong to the same class: ", sameClass[1]
             leafNode = BinaryNode(decision=sameClass[1])
             self.insert(node, 'left', leafNode)
         else:
             leftWord = self.findBestSplitNode(node, 'left') 
             self.insert(node, 'left', leftWord)
-            self.buildTree(node.left)
+            self.buildTree(node.left, height - 1)
 
-        print "Current Node: ", node.attribute
+        #print "Current Node: ", node.attribute
         # For Right Branch
         sameClass = self.checkIfSameClassRight(node)
         if sameClass[0] == True:
         # Do the records belong to the same class? No need to build the tree further
-            print "All records same class: ", sameClass[1]
+            #print "All records in this node belong to the same class: ", sameClass[1]
             leafNode = BinaryNode(decision=sameClass[1])
             self.insert(node, 'right', leafNode)
             return
         else:
             rightWord = self.findBestSplitNode(node, 'right') 
             self.insert(node, 'right', rightWord)
-            self.buildTree(node.right)
+            self.buildTree(node.right, height - 1)
        
     def findBestSplitNode(self, node, branch):
         # Find words which are to be considered for entropy calculation
@@ -111,18 +114,24 @@ class BinaryTree:
                                                         wordList,                                                                        \
                                                         list(itertools.repeat(node.indexSpamDocsWithoutWord, numberOfWords)),            \
                                                         list(itertools.repeat(node.indexNotSpamDocsWithoutWord, numberOfWords))))
-            print "Left: ", wordList[entropies.index(min(entropies))]
+            #print "Left: ", wordList[entropies.index(min(entropies))]
+            '''co = 0
+            for i in wordList:
+                #print i, ": ", entropies[co]
+                co +=1
+            sys.exit(0)
+            '''
         else:
             entropies = map(self.findWordEntropy, zip(                                                                                   \
                                                         wordList,                                                                        \
                                                         list(itertools.repeat(node.indexSpamDocsWithWord, numberOfWords)),               \
                                                         list(itertools.repeat(node.indexNotSpamDocsWithWord, numberOfWords))))
-            print "Right: ", wordList[entropies.index(min(entropies))]
-        
+            #print "Right: ", wordList[entropies.index(min(entropies))]
+        #print "Entropy: ", min(entropies) 
         bestWord = wordList[entropies.index(min(entropies))]
         newNode = BinaryNode(attribute=bestWord)
         newNode.setIgnoreWords(set([bestWord])|node.ignoreWords)
-        print sorted(newNode.ignoreWords)
+        #print "Words to ignore while entropy calculation: ", sorted(newNode.ignoreWords)
              
         if branch == 'left':
             indexSpamDocsWithWord, indexSpamDocsWithoutWord = self.createDocsIndexListForNode(node.indexSpamDocsWithoutWord, self.documentDictListSpam, bestWord)
@@ -140,9 +149,9 @@ class BinaryTree:
     def checkIfSameClassLeft(self, node):
         # Returns - (Same Class?, What's the class)
         if len(node.indexSpamDocsWithoutWord) == 0 and len(node.indexNotSpamDocsWithoutWord) != 0:
-            return (True, False)
+            return (True, False)    # Not Spam
         elif len(node.indexSpamDocsWithoutWord) != 0 and len(node.indexNotSpamDocsWithoutWord) == 0:
-            return (True, True)
+            return (True, True)     # Spam
         return (False, None)
     
     def checkIfSameClassRight(self, node):
@@ -173,7 +182,7 @@ class BinaryTree:
             node.setDecision(decision)
     
     # Finds Class having higher count
-    def findClassWithHigherCount(spamWithout, notSpamDocsWithout, spamDocsWith, notSpamDocsWith):
+    def findClassWithHigherCount(self, spamWithout, notSpamDocsWithout, spamDocsWith, notSpamDocsWith):
         spamCount = len(spamWithout) + len(spamDocsWith)
         notSpamCount = len(notSpamDocsWithout) + len(notSpamDocsWith)
         if spamCount > notSpamCount:
@@ -197,6 +206,9 @@ class BinaryTree:
 
     def findWordEntropy(self, argument):
         word, indexSpamDocs, indexNotSpamDocs = argument
+        #print "Entopry calculation for: ", word
+        #print "Spam docs indexes: ", indexSpamDocs
+        #print "Non Spam Docs indexes: ", indexNotSpamDocs
         positiveCountSpam = 0
         negativeCountSpam = 0
         positiveCountNotSpam = 0
@@ -211,40 +223,21 @@ class BinaryTree:
         for index in indexSpamDocs: 
             if word in self.documentDictListSpam[index]: 
                 positiveCountSpam += 1
-            else: negativeCountSpam += 1
+            else: 
+                negativeCountSpam += 1
 
+        # This word was not present in any of the partitions
+        if positiveCountSpam == 0 and negativeCountSpam == 0 and positiveCountNotSpam == 0 and negativeCountNotSpam == 0:
+            return sys.maxint
         return self.entropyHelper(positiveCountSpam, negativeCountSpam, positiveCountNotSpam, negativeCountNotSpam) 
 
-    '''
-    def mostImportantWord(self): 
-        bestWord, entropy = "", 1.1
-        for word in self.allWords:
-            positiveCountSpam = negativeCountSpam = positiveCountNotSpam = negativeCountNotSpam = 0
-             
-            do to: add statement: if condition holds (e.g. word1 is not in document, word2 is in document, word3, ...etc)
-            so that only the words that are on this branch are counted
-            documentDictListSpam: each list element contains a counter dict for each word in a given document.
-            for bernoulli, simply check whether word is in the counter dict. for multinomial, look at the word's value
-            
-            if word in self.documentDictListNotSpam: positiveCountNotSpam += 1
-            else: negativeCountNotSpam += 1
-            if word in self.documentDictListSpam: positiveCountSpam += 1
-            else: negativeCountSpam += 1
-            
-            
-            next, calculate entropy in the left and right branches. replace bestWord and entropy if the current value is 
-            better
-            
-        pass
-    '''
-            
     def entropyHelper(self, positiveCountSpam, negativeCountSpam, positiveCountNotSpam, negativeCountNotSpam):
         totSpam = positiveCountSpam + negativeCountSpam
         totNotspam = positiveCountNotSpam + negativeCountNotSpam
         tot = totSpam + totNotspam
         totPositiveCount = positiveCountNotSpam + positiveCountSpam
         totNegativeCount = negativeCountSpam + negativeCountNotSpam
-        #print positiveCountNotSpam, positiveCountSpam, totPositiveCount
+        #print "in not spam: ", positiveCountNotSpam, "in spam: ", positiveCountSpam
         p1 = self.checkLog(positiveCountNotSpam, totPositiveCount)
         p2 = self.checkLog(positiveCountSpam, totPositiveCount)
         
@@ -261,7 +254,7 @@ class BinaryTree:
             if entropies[i] < 0.6:
                 print self.allWords[i], entropies[i]
         '''
-        print "Min Entropy Root: ", min(entropies)
+        #print "Min Entropy Root: ", min(entropies)
         #sys.exit(0)
         
         return self.allWords[entropies.index(min(entropies))]

@@ -35,7 +35,8 @@ class ProcessCorpus:
                         "whence", "whenever", "where", "whereafter", "whereas", "whereby", "wherein", "whereupon", "wherever", "whether", "which", "while", \
                         "whither", "who", "whoever", "whole", "whom", "whose", "why", "will", "with", "within", "without", "would", "yet", "you", "your", \
                         "yours", "yourself", "yourselves", "the", \
-                        ]) 
+                        ])
+ 
         # Words related to email
         self.unwanted = set(['From:', 'Subject:', 'Summary:', 'Keywords:', 'Expires:', 'Distribution:', 'Organization:', 'Supersedes:', 'Lines:', 'Archive-name:', \
                         'Alt-atheism-archive-name:', 'Last-modified:', 'Version:', 'NNTP-Posting-Host:', 'Re:', 'Nntp-Posting-Host:', 'X-Mailer:', 'Reply-To:', \
@@ -44,6 +45,12 @@ class ProcessCorpus:
                         'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat',\
                         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' \
                         ])
+
+        # If token contains any of these - ignore it.
+        self.remove = set(['!', '\\', '/', ',', '.', '@', '=', '[', ']', '(', ')', ':', ';', '?', '^', '{', '}', '|', '<', '>', '"', '#', '%', '&', '+', '`', '~',\
+                             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
+
+
 
     def splitOnPunctuations(self, token, regex):
         return regex.sub('#', token).split('#')
@@ -55,30 +62,39 @@ class ProcessCorpus:
         
     def toConsiderOrNotToConsider(self, word):
 
+        if word in self.unwanted:
+            return False 
+
         if word in self.stopWords:
             return False
-        if word == '' and re.match("^[\w\d_-]*$", word) == False:
+        
+        if word == '':
             return False
+       
+        if any(ch in self.remove for ch in word):
+            return False 
 
         if str.isdigit(word):
             return False
          
-        if len(word) > 10:
+        if len(word) > 15 or len(word) < 3:
             return False
 
         return True
 
+    # This function is used in bayesTesting.py too
     def fetchTokens(self, document):
         # TODO 
         tokens = []
-        regex = re.compile('[%s]' % re.escape(string.punctuation))
+        #regex = re.compile('[%s]' % re.escape(string.punctuation))
+        flag = True
         for token in document.read().split():
-            
             # Remove HTML tags and URLs
-            if ('<' in token or '>' in token) or token.startswith('http://') or self.checkUnwanted(token) == False:
+            if self.checkUnwanted(token) == False or ('<' in token or '>' in token) or token.startswith('http://'):
                 #print token
                 continue
 
+            #    for entry in self.splitOnPunctuations(token, regex):
             token = str.lower(str.lstrip(str.rstrip(token, string.punctuation), string.punctuation))
             if self.toConsiderOrNotToConsider(token):
                     tokens.append(token)
