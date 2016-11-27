@@ -2,9 +2,6 @@ from __future__ import division
 import os, string, math, heapq
 from collections import Counter
 
-#ob = []
-#om = []
-
 
 class TestingBayesModel:
     def __init__(self, directory):
@@ -18,43 +15,12 @@ class TestingBayesModel:
         print "False Positive: ", confidenceMatrix[2] 
         print "True Negative: ", confidenceMatrix[3] 
 
-    def calculateProbWordsGivenS(self, probWGivenS, wordCount, pClass):
+    def calculateProbWordsGivenTopic(self, probWGivenT, wordCount, pClass):
         # For now considering only words present in the training data.
         # Also for a particular test document's words - taking into consideration only P(W|S) and not 1 - P(W|S)
-        return sum([math.log(probWGivenS[entry]) for entry in wordCount if entry in probWGivenS]) + math.log(pClass)
-
-
-        result = 0
-        for entry in probWGivenS:
-            if entry in wordCount:
-                result += math.log(probWGivenS[entry])
-                #print entry, probWGivenS[entry]
-            else:
-                if probWGivenS[entry] > 0:
-                    #print entry, probWGivenS[entry]
-                    result += math.log(1 - probWGivenS[entry])
-                else:
-                    # Word wasn't there in training data. Ignoring. TODO: Do not ignore?
-                    pass
-                #print entry, 1 - probWGivenS[entry]
-        #print min(probWordsGivenS)
-        return result + math.log(pClass)
+        return sum([math.log(probWGivenT[entry]) for entry in wordCount if entry in probWGivenT]) + math.log(pClass)
 
     def bernoulliThresh(self, oddsRatio, confidenceMatrix, threshold, classType):
-        if oddsRatio > threshold:
-            #print "Predicted - Spam"
-            if classType == 'spam':
-                confidenceMatrix[0] += 1
-            if classType == 'notspam':
-                confidenceMatrix[1] += 1
-        else:
-            #print "Predicted - Not Spam"
-            if classType == 'spam':
-                confidenceMatrix[2] += 1
-            if classType == 'notspam':
-                confidenceMatrix[3] += 1
-        
-    def multinomialThresh(self, oddsRatio, confidenceMatrix, threshold, classType):
         if oddsRatio > threshold:
             #print "Predicted - Spam"
             if classType == 'spam':
@@ -81,13 +47,8 @@ class TestingBayesModel:
                 #print "\nFile Name: ", fileName, "Type: ", classType
                 oddsRatio = probIsSpam/probIsNotSpam
                 #print "Odds Ratio: ", oddsRatio
-               
-                if modelName == 'bernoulli':
-                    #ob.append(oddsRatio)
-                    self.bernoulliThresh(oddsRatio, confidenceMatrix, threshold, classType)
-                elif modelName == 'multinomial':
-                    #om.append(oddsRatio)
-                    self.multinomialThresh(oddsRatio, confidenceMatrix, threshold, classType)
+                
+                self.bernoulliThresh(oddsRatio, confidenceMatrix, threshold, classType)
                     
     # Top 10 least associated with spam
     def leastAssociated(self, prob):

@@ -2,11 +2,13 @@ from __future__ import division
 import os, string, sys, math, pickle, re
 from collections import Counter
 from processCorpus import ProcessCorpus
+from processCorpusUnknown import ProcessCorpusUnknown
 
 class TrainingBayesModel:
-    def __init__(self, directory):
+    def __init__(self, directory, probKnowTopic = 1.):
         self.directory = directory
-        self.processCorpus = ProcessCorpus("./train")
+        self.probKnowTopic = probKnowTopic
+        self.processCorpus = ProcessCorpusUnknown("./train", self.probKnowTopic)
         self.totTrainingDocs = 0
         self.probTopic = {} #probability of each of the 20 topics
         self.probWGivenTopic = {} #each list item is a counter for one topic
@@ -30,7 +32,7 @@ class TrainingBayesModel:
         for entry in totDocWordCountInTopics:
             docCount = totDocWordCountInTopics[entry][0]
             prob[entry] = docCount/totalDocs
-            print docCount, totalDocs, prob[entry]
+            #print docCount, totalDocs, prob[entry]
         return prob
 
     def train(self): 
