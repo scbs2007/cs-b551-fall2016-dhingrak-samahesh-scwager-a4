@@ -126,6 +126,7 @@ class ProcessCorpusUnknown:
         # Reading all files in topic subdirectory
         for fileName in os.listdir(directoryPath):
             with open(directoryPath + '/' + fileName) as document:
+                docID = directoryPath + '/' + fileName
                 knowTopic = True if np.random.binomial(1, self.probKnowTopic) == 1 else False #determine whether topic is known
                 docWordCount, docWordFreq = self.countWordsInDocument(wordFreq, document) #total number of words in doc, word frequency counter
                 if knowTopic:
@@ -134,10 +135,10 @@ class ProcessCorpusUnknown:
                 else:
                     self.unknownWordCount += docWordCount
                     self.unknownDocCount += 1
-                self.wordCountInEachDoc[fileName] = docWordFreq #store word count data for this individual document
+                self.wordCountInEachDoc[docID] = docWordFreq #store word count data for this individual document
                 '''print "file: ", fileName, "wordCountInDoc", self.wordCountInEachDoc[fileName]
                 quit() '''
-                self.topicIsFixed[fileName] = True if knowTopic else False
+                self.topicIsFixed[docID] = True if knowTopic else False
         return (docCount, wordCount)
 
     def calculate(self):
