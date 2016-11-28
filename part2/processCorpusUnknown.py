@@ -14,7 +14,7 @@ class ProcessCorpusUnknown:
         self.totalDocs = 0
         self.probKnowTopic = probKnowTopic #probability that we know the topic of a given document
         self.wordCountInEachDoc = Counter() #stores key = document ID, value = Counter object reference (count of each word's occurrence in the given doc) 
-        self.topicIsFixed = {} #stores key = document ID, value = whether topic was known in advance or only estimated (i.e., could be changed)
+        self.topicIsFixed = {} #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
         self.unknownWordCount = 0
         self.unknownDocCount = 0
   
@@ -138,7 +138,7 @@ class ProcessCorpusUnknown:
                 self.wordCountInEachDoc[docID] = docWordFreq #store word count data for this individual document
                 '''print "file: ", fileName, "wordCountInDoc", self.wordCountInEachDoc[fileName]
                 quit() '''
-                self.topicIsFixed[docID] = True if knowTopic else False
+                self.topicIsFixed[docID] = (True, docID) if knowTopic else (False, "")
         return (docCount, wordCount)
 
     def calculate(self):
