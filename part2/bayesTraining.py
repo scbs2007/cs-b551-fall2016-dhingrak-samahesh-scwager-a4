@@ -32,6 +32,7 @@ class TrainingBayesModel:
         # For now considering only words present in the training data.
         return sum([math.log(probWGivenT[entry]) for entry in wordCount if entry in probWGivenT]) + math.log(pClass)
         
+        
     def assignTopicsToUnknown(self, wordCountInEachDoc, topicIsFixed, probWGivenTopic, probTopic): 
         '''assign max prob topic to each doc whose topic is unknown
         TO DO: assign randomly when the number of docs with known topics is small or zero'''
@@ -39,17 +40,15 @@ class TrainingBayesModel:
             if not fixed:
 #                 print "docID", docID
                 wordCountInDoc = wordCountInEachDoc[docID]
-                
 #                 counter = 0
 #                 for word, count in wordCountInDoc.items():
 #                     if counter < 5:
 #                       print "word", word, "count", count
 #                     counter += 1
-                
                 highestProbTopic, prob = "", -10000000.
                 for topic, probT in probTopic.items():
 #                     print "testing for topic", topic, "probT", probT
-                    probTopicGivenDoc = self.calculateProbWordsGivenTopic(probWGivenTopic, wordCountInDoc, probT)
+                    probTopicGivenDoc = self.calculateProbWordsGivenTopic(probWGivenTopic[topic], wordCountInDoc, probT)
                     if probTopicGivenDoc > prob:
                         highestProbTopic, prob = topic, probTopicGivenDoc
 #                         print "highestProbTopic", highestProbTopic, "prob", prob
@@ -83,7 +82,6 @@ class TrainingBayesModel:
             if counter < 100 and not fixed:
               print entry, fixed, topic
             counter += 1
-        print topicIsFixed
         self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Multinomial, probTopic)
         print "after\n\n"
         counter = 0
