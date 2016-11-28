@@ -11,36 +11,48 @@ class TrainingBayesModel:
         self.processCorpus = ProcessCorpusUnknown("./train", self.probKnowTopic)
         self.totTrainingDocs = 0
         self.docTopics = {} #probability of each of the 20 topics
+        self.probWGivenTopic_Multinomial = {} #probability of each word given each topic
+        
+    def calculateProbWGivenTopic_Multinomial(self, wordCount, totWordsInClass):
+        '''returns counter object reference for single topic'''
+        prob = Counter()
+        for entry in wordCount:
+            prob[entry] = (wordCount[entry]+1)/(totWordsInClass+1)
+        return prob
+        
+    def calculateProbWGivenTopics_Multinomial(self, wordCountInTopics, totDocWordCountInTopics):
+        '''returns a counter with key: topic, value: counter object reference: probability of each word'''
+        probWGivenTopic = Counter()
+        for topic in wordCountInTopics:
+            totWordsInTopic = totDocWordCountInTopics[topic][1] #total number of words in topic
+            probWGivenTopic[topic] = self.calculateProbWGivenTopic_Multinomial(wordCountInTopics[topic], totWordsInTopic) #prob of each word occurring in topic
+        return probWGivenTopic
         
     def calculateProbWordsGivenTopic(self, probWGivenT, wordCount, pClass):
         # For now considering only words present in the training data.
         return sum([math.log(probWGivenT[entry]) for entry in wordCount if entry in probWGivenT]) + math.log(pClass)
         
-    def calculateProbWGivenTopic_Multinomial(self, wordCount, totWordsInClass, totDocs):
-        prob = Counter()
-        for entry in wordCount:
-            prob[entry] = wordCount[entry]/(totWordsInClass + totDocs)
-        return prob
-        
-    def calculateProbWGivenTopics_Multinomial(self, wordCountInTopics, totDocWordCountInTopics, totDocs):
-        probWGivenTopic = Counter()
-        for topic in wordCountInTopics:
-            totWordsInTopic = totDocWordCountInTopics[topic][1] #number of words in topic
-            probWGivenTopic[topic] = self.calculateProbWGivenTopic_Multinomial(wordCountInTopics[topic], totWordsInTopic, totDocs)
-        return probWGivenTopic
-        
-    def assignTopicsToUnknown(self, wordCountInTopics, wordCountInEachDoc, totDocWordCountInTopics, topicIsFixed, probWGivenT, totDocs): 
+    def assignTopicsToUnknown(self, wordCountInEachDoc, topicIsFixed, probWGivenTopic, probTopic): 
         '''assign max prob topic to each doc whose topic is unknown
         TO DO: assign randomly when the number of docs with known topics is small or zero'''
         for docID, (fixed, topicID) in topicIsFixed.items():
             if not fixed:
+#                 print "docID", docID
                 wordCountInDoc = wordCountInEachDoc[docID]
-                highestProbTopic, prob = "", -100000
-                for topic, wordCount in wordCountInTopics.items():
-                    #docCount = totDocWordCountInTopics[topic][0] #TO DO?? number of docs in topic ??need to check whether to use this or totDocs
-                    probTopicGivenDoc = self.calculateProbWordsGivenTopic(probWGivenT, wordCount, totDocs)
+                
+#                 counter = 0
+#                 for word, count in wordCountInDoc.items():
+#                     if counter < 5:
+#                       print "word", word, "count", count
+#                     counter += 1
+                
+                highestProbTopic, prob = "", -10000000.
+                for topic, probT in probTopic.items():
+#                     print "testing for topic", topic, "probT", probT
+                    probTopicGivenDoc = self.calculateProbWordsGivenTopic(probWGivenTopic, wordCountInDoc, probT)
                     if probTopicGivenDoc > prob:
                         highestProbTopic, prob = topic, probTopicGivenDoc
+#                         print "highestProbTopic", highestProbTopic, "prob", prob
                 topicIsFixed[docID] = (False, highestProbTopic)
         
     def calculateProbTopic(self, totDocWordCountInTopics, totalDocs):
@@ -62,13 +74,23 @@ class TrainingBayesModel:
         topicIsFixed = self.processCorpus.topicIsFixed #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
         wordCountInEachDoc = self.processCorpus.wordCountInEachDoc # stores key: doc ID, value = counter object reference for the doc 
         totalDocs = self.processCorpus.totalDocs #total number of docs
+        probTopic = self.calculateProbTopic(totDocWordCountInTopics, totalDocs)
         
-        self.probWGivenTopic_Multinomial = self.calculateProbWGivenTopics_Multinomial(wordCountInTopics, totDocWordCountInTopics, totalDocs)
+        self.probWGivenTopic_Multinomial = self.calculateProbWGivenTopics_Multinomial(wordCountInTopics, totDocWordCountInTopics)
         print "before\n\n"
+        counter = 0
+        for entry, (fixed, topic) in topicIsFixed.items():
+            if counter < 100 and not fixed:
+              print entry, fixed, topic
+            counter += 1
         print topicIsFixed
-        self.assignTopicsToUnknown(wordCountInTopics, wordCountInEachDoc, totDocWordCountInTopics, topicIsFixed, self.probWGivenTopic_Multinomial, totalDocs)
+        self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Multinomial, probTopic)
         print "after\n\n"
-        print topicIsFixed
+        counter = 0
+        for entry, (fixed, topic) in topicIsFixed.items():
+            if counter < 100 and not fixed:
+              print entry, fixed, topic
+            counter += 1
 
 
         
