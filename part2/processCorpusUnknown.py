@@ -10,13 +10,16 @@ class ProcessCorpusUnknown:
     def __init__(self, directory, probKnowTopic = 1.):
         self.directory = directory
         self.docsAndWords = Counter() # stores the number of words and the number of documents for all topics as tuples.
-        self.wordCountMapping = Counter() # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
+        self.wordCountMappingMultinomial = Counter() # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
+        self.wordCountMappingBernoulli = Counter() # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
         self.totalDocs = 0
         self.probKnowTopic = probKnowTopic #probability that we know the topic of a given document
         self.wordCountInEachDoc = Counter() #stores key = document ID, value = Counter object reference (count of each word's occurrence in the given doc) 
         self.topicIsFixed = {} #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
         self.unknownWordCount = 0
         self.unknownDocCount = 0
+        self.allWordsInCorpus = set() 
+
   
         # http://xpo6.com/list-of-english-stop-words/
         self.stopWords = set(["a", "about", "above", "across", "after", "afterwards", "again", "against", "all", "almost", "alone", "along", "already", "also", \
@@ -107,16 +110,22 @@ class ProcessCorpusUnknown:
         return tokens
 
     # Counts w|c; total number of words in a document
-    def countWordsInDocument(self, wordFreq, document):
+    def countWordsInDocument(self, wordFreqMultinomial, wordFreqBernoulli, document):
+        flag = set() # Keeps track of word that has already been counted once for a particular document - For Bernoulli Model
         count = 0 # Counts total number of words in document
         docWordFreq = Counter()
         for entry in self.fetchTokens(document):
-            count += 1
-            wordFreq[entry] += 1
-            docWordFreq[entry] += 1
+            count += 1 
+            docWordFreq[entry] += 1 #store word count data for this individual document
+            self.allWordsInCorpus.add(entry)
+            wordFreqMultinomial[entry] += 1
+            if entry in flag:
+                continue
+            wordFreqBernoulli[entry] += 1
+            flag.add(entry)
         return count, docWordFreq
         
-    def creatingVector(self, wordFreq, directoryPath):
+    def creatingVector(self, wordFreqMultinomial, wordFreqBernoulli, directoryPath):
         ''' read in words from file and store information about each individual doc. 
         choose randomly with given probability whether topic is known or unknown.
         if known, update topic information. if not, update count of unknown documents.'''
@@ -128,7 +137,7 @@ class ProcessCorpusUnknown:
             with open(directoryPath + '/' + fileName) as document:
                 docID = directoryPath + '/' + fileName
                 knowTopic = True if np.random.binomial(1, self.probKnowTopic) == 1 else False #determine whether topic is known
-                docWordCount, docWordFreq = self.countWordsInDocument(wordFreq, document) #total number of words in doc, word frequency counter
+                docWordCount, docWordFreq = self.countWordsInDocument(wordFreqMultinomial, wordFreqBernoulli, document) #total number of words in doc, word frequency counter
                 if knowTopic:
                     wordCount += docWordCount
                     docCount += 1
@@ -138,7 +147,7 @@ class ProcessCorpusUnknown:
                 self.wordCountInEachDoc[docID] = docWordFreq #store word count data for this individual document
                 '''print "file: ", fileName, "wordCountInDoc", self.wordCountInEachDoc[fileName]
                 quit() '''
-                self.topicIsFixed[docID] = (True, docID) if knowTopic else (False, "") ##!!
+                self.topicIsFixed[docID] = (True, directoryPath) if knowTopic else (False, "") ##TO DO!!want to keep only the topic name
         return (docCount, wordCount)
 
     def calculate(self):
@@ -148,9 +157,11 @@ class ProcessCorpusUnknown:
                         
         for topic in topics:
             print "Counting words in topic: ", topic
-            wordFreq = Counter()
-            self.docsAndWords[topic] = self.creatingVector(wordFreq, topic)
-            self.wordCountMapping[topic] = wordFreq
+            wordFreqMultinomial = Counter()
+            wordFreqBernoulli = Counter()
+            self.docsAndWords[topic] = self.creatingVector(wordFreqMultinomial, wordFreqBernoulli, topic)
+            self.wordCountMappingMultinomial[topic] = wordFreqMultinomial
+            self.wordCountMappingBernoulli[topic] = wordFreqBernoulli
         self.totalDocs = sum([docs for topics, (docs, words) in self.docsAndWords.items()]) #count only known docs
         print "Words counted in all documents in all topics!"
 

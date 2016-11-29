@@ -11,6 +11,7 @@ class TrainingBayesModel:
         self.totTrainingDocs = 0
         self.docTopics = {} #probability of each of the 20 topics
         self.probWGivenTopic_Multinomial = {} #probability of each word given each topic
+        self.probWGivenTopic_Bernoulli = {}
         
     def calculateProbWGivenTopic_Multinomial(self, wordCount, totWordsInClass):
         '''returns counter object reference for single topic'''
@@ -25,6 +26,20 @@ class TrainingBayesModel:
         for topic in wordCountInTopics:
             totWordsInTopic = totDocWordCountInTopics[topic][1] #total number of words in topic
             probWGivenTopic[topic] = self.calculateProbWGivenTopic_Multinomial(wordCountInTopics[topic], totWordsInTopic) #prob of each word occurring in topic
+        return probWGivenTopic
+        
+    def calculateProbWGivenTopic_Bernoulli(self, wordCount, docCount):
+        prob = Counter()
+        for entry in wordCount:
+            prob[entry] = (wordCount[entry]+1)/(docCount+2)
+        return prob
+        
+    def calculateProbWGivenTopics_Bernoulli(self, wordCountInTopics, totDocWordCountInTopics):
+        '''returns a counter with key: topic, value: counter object reference: probability of each word'''
+        probWGivenTopic = Counter()
+        for topic in wordCountInTopics:
+            totDocsInTopic = totDocWordCountInTopics[topic][0] #total number of words in topic
+            probWGivenTopic[topic] = self.calculateProbWGivenTopic_Bernoulli(wordCountInTopics[topic], totDocsInTopic) #prob of each word occurring in topic
         return probWGivenTopic
         
     def calculateProbWordsGivenTopic(self, probWGivenT, wordCount, pClass):
@@ -59,25 +74,29 @@ class TrainingBayesModel:
         print "Creating Vector."
         self.processCorpus.calculate()
 
-        wordCountInTopics = self.processCorpus.wordCountMapping # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
+        wordCountInTopicsMultinomial = self.processCorpus.wordCountMappingMultinomial # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
+        wordCountInTopicsBernoulli = self.processCorpus.wordCountMappingBernoulli # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
         totDocWordCountInTopics = self.processCorpus.docsAndWords # stores the number of words and the number of documents for all topics as tuples.
         topicIsFixed = self.processCorpus.topicIsFixed #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
         wordCountInEachDoc = self.processCorpus.wordCountInEachDoc # stores key: doc ID, value = counter object reference for the doc (counts only docs with *known* topic)
         totalDocs = self.processCorpus.totalDocs #total number of docs with *known* topic because used for the prob calculation
         probTopic = self.calculateProbTopic(totDocWordCountInTopics, totalDocs)
         
-        self.probWGivenTopic_Multinomial = self.calculateProbWGivenTopics_Multinomial(wordCountInTopics, totDocWordCountInTopics)
+        self.probWGivenTopic_Multinomial = self.calculateProbWGivenTopics_Multinomial(wordCountInTopicsMultinomial, totDocWordCountInTopics)
+        self.probWGivenTopic_Bernoulli = self.calculateProbWGivenTopics_Bernoulli(wordCountInTopicsBernoulli, totDocWordCountInTopics)
+
         print "before\n\n"
         counter = 0
         for entry, (fixed, topic) in topicIsFixed.items():
-            if counter < 100 and not fixed:
+            if counter < 100:
               print entry, fixed, topic
             counter += 1
-        self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Multinomial, probTopic)
+#         self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Multinomial, probTopic)
+        self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, probTopic)
         print "after\n\n"
         counter = 0
         for entry, (fixed, topic) in topicIsFixed.items():
-            if counter < 100 and not fixed:
+            if counter < 100:
               print entry, fixed, topic
             counter += 1
 
