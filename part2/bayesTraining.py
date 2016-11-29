@@ -42,6 +42,15 @@ class TrainingBayesModel:
             probWGivenTopic[topic] = self.calculateProbWGivenTopic_Bernoulli(wordCountInTopics[topic], totDocsInTopic) #prob of each word occurring in topic
         return probWGivenTopic
         
+    def calculateProbTopic(self, totDocWordCountInTopics, totalDocs):
+        '''probability of a given topic occurring, calculated based on number of examples for each topic'''
+        prob = Counter()
+        for entry in totDocWordCountInTopics:
+            docCount = totDocWordCountInTopics[entry][0]
+            prob[entry] = docCount/totalDocs
+            #print docCount, totalDocs, prob[entry]
+        return prob
+        
     def calculateProbWordsGivenTopic(self, probWGivenT, wordCount, pClass):
         # For now considering only words present in the training data.
         return sum([math.log(probWGivenT[entry]) for entry in wordCount if entry in probWGivenT]) + math.log(pClass)
@@ -59,15 +68,17 @@ class TrainingBayesModel:
                         highestProbTopic, prob = topic, probTopicGivenDoc
 #                         print "highestProbTopic", highestProbTopic, "prob", prob
                 topicIsFixed[docID] = (False, highestProbTopic)
-        
-    def calculateProbTopic(self, totDocWordCountInTopics, totalDocs):
-        '''probability of a given topic occurring, calculated based on number of examples for each topic'''
-        prob = Counter()
-        for entry in totDocWordCountInTopics:
-            docCount = totDocWordCountInTopics[entry][0]
-            prob[entry] = docCount/totalDocs
-            #print docCount, totalDocs, prob[entry]
-        return prob
+                
+    def updateCountsAndProbabilities(self):
+        '''update the following after assigningTopicsToUnknown:
+        wordCountInTopicsMultinomial_updated = wordCountInTopicsMultinomial + new words assigned to the topic
+        wordCountInTopicsBernoulli_updated = wordCountInTopicsBernoulli + new words assigned to the topic
+        totDocWordCountInTopics_updated = totDocWordCountInTopics + new tot doc and word count
+        totalDocs = all docs, fixed or not, after 1st round
+        probTopic = update using totDocWordCountInTopics_updated
+        self.probWGivenTopic_Multinomial = self.calculateProbWGivenTopics_Multinomial(wordCountInTopicsMultinomial, totDocWordCountInTopics)
+        self.probWGivenTopic_Bernoulli = self.calculateProbWGivenTopics_Bernoulli(wordCountInTopicsBernoulli, totDocWordCountInTopics)
+'''
 
     def train(self):
         print "Training Bayes Net Model."
@@ -91,6 +102,14 @@ class TrainingBayesModel:
             if counter < 100:
               print entry, fixed, topic
             counter += 1
+        '''
+        TO DO:
+        special case where probKnowTopic == 0: assign docs randomly on the first round.
+        if probKnowTopic < 0.1:
+            self.assignTopicsRandomly()
+        else:
+            do what is below
+        '''
 #         self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Multinomial, probTopic)
         self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, probTopic)
         print "after\n\n"
@@ -99,6 +118,16 @@ class TrainingBayesModel:
             if counter < 100:
               print entry, fixed, topic
             counter += 1
+            
+        '''
+        while not converged (how to check this?):
+            self.updateCountsAndProbabilities()
+            self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, probTopic)
+            
+        #finally:
+        print top 20 words
+        
+        '''
 
 
         
