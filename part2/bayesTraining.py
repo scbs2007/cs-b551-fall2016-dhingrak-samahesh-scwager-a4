@@ -1,7 +1,6 @@
 from __future__ import division
 import os, string, sys, math, pickle, re
 from collections import Counter
-from processCorpus import ProcessCorpus
 from processCorpusUnknown import ProcessCorpusUnknown
 
 class TrainingBayesModel:
@@ -32,22 +31,14 @@ class TrainingBayesModel:
         # For now considering only words present in the training data.
         return sum([math.log(probWGivenT[entry]) for entry in wordCount if entry in probWGivenT]) + math.log(pClass)
         
-        
     def assignTopicsToUnknown(self, wordCountInEachDoc, topicIsFixed, probWGivenTopic, probTopic): 
         '''assign max prob topic to each doc whose topic is unknown
         TO DO: assign randomly when the number of docs with known topics is small or zero'''
         for docID, (fixed, topicID) in topicIsFixed.items():
-            if not fixed:
-#                 print "docID", docID
+            if not fixed or fixed: #remove or if fixed
                 wordCountInDoc = wordCountInEachDoc[docID]
-#                 counter = 0
-#                 for word, count in wordCountInDoc.items():
-#                     if counter < 5:
-#                       print "word", word, "count", count
-#                     counter += 1
-                highestProbTopic, prob = "", -10000000.
+                highestProbTopic, prob = "", -100000
                 for topic, probT in probTopic.items():
-#                     print "testing for topic", topic, "probT", probT
                     probTopicGivenDoc = self.calculateProbWordsGivenTopic(probWGivenTopic[topic], wordCountInDoc, probT)
                     if probTopicGivenDoc > prob:
                         highestProbTopic, prob = topic, probTopicGivenDoc
@@ -63,7 +54,7 @@ class TrainingBayesModel:
             #print docCount, totalDocs, prob[entry]
         return prob
 
-    def train(self): 
+    def train(self):
         print "Training Bayes Net Model."
         print "Creating Vector."
         self.processCorpus.calculate()
@@ -71,8 +62,8 @@ class TrainingBayesModel:
         wordCountInTopics = self.processCorpus.wordCountMapping # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
         totDocWordCountInTopics = self.processCorpus.docsAndWords # stores the number of words and the number of documents for all topics as tuples.
         topicIsFixed = self.processCorpus.topicIsFixed #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
-        wordCountInEachDoc = self.processCorpus.wordCountInEachDoc # stores key: doc ID, value = counter object reference for the doc 
-        totalDocs = self.processCorpus.totalDocs #total number of docs
+        wordCountInEachDoc = self.processCorpus.wordCountInEachDoc # stores key: doc ID, value = counter object reference for the doc (counts only docs with *known* topic)
+        totalDocs = self.processCorpus.totalDocs #total number of docs with *known* topic because used for the prob calculation
         probTopic = self.calculateProbTopic(totDocWordCountInTopics, totalDocs)
         
         self.probWGivenTopic_Multinomial = self.calculateProbWGivenTopics_Multinomial(wordCountInTopics, totDocWordCountInTopics)

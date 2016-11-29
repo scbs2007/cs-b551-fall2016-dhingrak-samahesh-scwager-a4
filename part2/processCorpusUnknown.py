@@ -138,7 +138,7 @@ class ProcessCorpusUnknown:
                 self.wordCountInEachDoc[docID] = docWordFreq #store word count data for this individual document
                 '''print "file: ", fileName, "wordCountInDoc", self.wordCountInEachDoc[fileName]
                 quit() '''
-                self.topicIsFixed[docID] = (True, docID) if knowTopic else (False, "")
+                self.topicIsFixed[docID] = (True, docID) if knowTopic else (False, "") ##!!
         return (docCount, wordCount)
 
     def calculate(self):
@@ -151,7 +151,14 @@ class ProcessCorpusUnknown:
             wordFreq = Counter()
             self.docsAndWords[topic] = self.creatingVector(wordFreq, topic)
             self.wordCountMapping[topic] = wordFreq
-        self.totalDocs = len(self.topicIsFixed)
-        '''print "topicIsFixed", self.topicIsFixed
-        print "unknownWordCount, unknownDocCount", self.unknownWordCount, self.unknownDocCount'''
+        self.totalDocs = sum([docs for topics, (docs, words) in self.docsAndWords.items()]) #count only known docs
         print "Words counted in all documents in all topics!"
+
+'''
+checking for bugs:
+creating vector: docWordFreq for individual doc is OK so self.wordCountInEachDoc[docID] is OK
+totalDocs is ok: counts only known docs
+unknownDocCount is ok
+wordCountMapping and wordFreq are ok
+didn't check totalWords but am 99% sure it's ok
+'''
