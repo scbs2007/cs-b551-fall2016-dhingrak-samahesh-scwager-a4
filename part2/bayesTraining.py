@@ -1,5 +1,5 @@
 from __future__ import division
-import os, string, sys, math, pickle, re
+import os, string, sys, math, pickle, re, heapq
 from collections import Counter
 from processCorpusUnknown import ProcessCorpusUnknown
 
@@ -12,7 +12,40 @@ class TrainingBayesModel:
         self.docTopics = {} #probability of each of the 20 topics
         self.probWGivenTopic_Multinomial = {} #probability of each word given each topic
         self.probWGivenTopic_Bernoulli = {}
+        self.probTopic = Counter()
+        self.probWord = Counter() #probability of each word occurring in the corpus
         
+    # Top 10 most associated with spam
+    def mostAssociated(self, prob):
+        return heapq.nlargest(10, prob, key=prob.get)
+
+    def displayList(self, l):
+        for entry in l:
+            print entry + " ", 
+        print "\n"
+        
+    def writeList(self, l):
+        s = ""
+        for entry in l:
+            s += entry + " "
+        return s
+        
+    def calculateProbTopicGivenWord(self, probWT, probT):
+        probTW = Counter()
+        for word, probW in self.probWord.items():
+            probTW[word] = probWT[word] * probT / probW if word in probWT else 0
+        return probTW
+        
+    def findTop10WordsGivenTopic(self):
+        probTopicGivenWord = Counter()
+        top10String = "Top 10 most associated words for each topic:\n"
+        for topic, probT in self.probTopic.items():
+            probWT = self.probWGivenTopic_Bernoulli[topic]
+            probTopicGivenWord[topic] = self.calculateProbTopicGivenWord(probWT, probT)
+            top10String += "\ntopic: " + topic + "\n" + self.writeList(self.mostAssociated(probTopicGivenWord[topic]))
+#             print top10String
+        return probTopicGivenWord, top10String
+
     def calculateProbWGivenTopic_Multinomial(self, wordCount, totWordsInClass):
         '''returns counter object reference for single topic'''
         prob = Counter()
@@ -49,6 +82,12 @@ class TrainingBayesModel:
             docCount = totDocWordCountInTopics[entry][0]
             prob[entry] = docCount/totalDocs
             #print docCount, totalDocs, prob[entry]
+        return prob
+        
+    def calculateProbWord(self, wordFreqInCorpus, totalWords):
+        prob = Counter()
+        for entry, count in wordFreqInCorpus.items():
+            prob[entry] = count/totalWords
         return prob
         
     def calculateProbWordsGivenTopic(self, probWGivenT, wordCount, pClass):
@@ -91,12 +130,19 @@ class TrainingBayesModel:
         topicIsFixed = self.processCorpus.topicIsFixed #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
         wordCountInEachDoc = self.processCorpus.wordCountInEachDoc # stores key: doc ID, value = counter object reference for the doc (counts only docs with *known* topic)
         totalDocs = self.processCorpus.totalDocs #total number of docs with *known* topic because used for the prob calculation
-        probTopic = self.calculateProbTopic(totDocWordCountInTopics, totalDocs)
+        totalWords = self.processCorpus.totalWords #total number of words in *all* docs, with known or unknown topic
+        wordFreqInCorpus = self.processCorpus.wordFreqInCorpus
+        self.probTopic = self.calculateProbTopic(totDocWordCountInTopics, totalDocs)
+        self.probWord = self.calculateProbWord(wordFreqInCorpus, totalWords)
         
         self.probWGivenTopic_Multinomial = self.calculateProbWGivenTopics_Multinomial(wordCountInTopicsMultinomial, totDocWordCountInTopics)
         self.probWGivenTopic_Bernoulli = self.calculateProbWGivenTopics_Bernoulli(wordCountInTopicsBernoulli, totDocWordCountInTopics)
 
-        print "before\n\n"
+        probTopicGivenWord, s = self.findTop10WordsGivenTopic()
+        with open("distinctive_words.txt", "w") as text_file:
+            text_file.write(s)
+
+        print "before assigning topics\n\n"
         counter = 0
         for entry, (fixed, topic) in topicIsFixed.items():
             if counter < 100:
@@ -111,8 +157,8 @@ class TrainingBayesModel:
             do what is below
         '''
 #         self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Multinomial, probTopic)
-        self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, probTopic)
-        print "after\n\n"
+        self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic)
+        print "after assigning topics\n\n"
         counter = 0
         for entry, (fixed, topic) in topicIsFixed.items():
             if counter < 100:
@@ -123,9 +169,6 @@ class TrainingBayesModel:
         while not converged (how to check this?):
             self.updateCountsAndProbabilities()
             self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, probTopic)
-            
-        #finally:
-        print top 20 words
         
         '''
 

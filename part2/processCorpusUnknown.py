@@ -12,13 +12,14 @@ class ProcessCorpusUnknown:
         self.docsAndWords = Counter() # stores the number of words and the number of documents for all topics as tuples.
         self.wordCountMappingMultinomial = Counter() # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
         self.wordCountMappingBernoulli = Counter() # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
-        self.totalDocs = 0
+        self.totalDocs = 0 #total number of docs with *known* topic because used for the prob calculation
+        self.totalWords = 0 #total number of words in *all* docs, with known or unknown topic
         self.probKnowTopic = probKnowTopic #probability that we know the topic of a given document
         self.wordCountInEachDoc = Counter() #stores key = document ID, value = Counter object reference (count of each word's occurrence in the given doc) 
         self.topicIsFixed = {} #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
         self.unknownWordCount = 0
         self.unknownDocCount = 0
-        self.allWordsInCorpus = set() 
+        self.wordFreqInCorpus = Counter() 
 
   
         # http://xpo6.com/list-of-english-stop-words/
@@ -117,7 +118,7 @@ class ProcessCorpusUnknown:
         for entry in self.fetchTokens(document):
             count += 1 
             docWordFreq[entry] += 1 #store word count data for this individual document
-            self.allWordsInCorpus.add(entry)
+            self.wordFreqInCorpus[entry] += 1
             wordFreqMultinomial[entry] += 1
             if entry in flag:
                 continue
@@ -145,6 +146,7 @@ class ProcessCorpusUnknown:
                     self.unknownWordCount += docWordCount
                     self.unknownDocCount += 1
                 self.wordCountInEachDoc[docID] = docWordFreq #store word count data for this individual document
+                self.totalWords += docWordCount
                 '''print "file: ", fileName, "wordCountInDoc", self.wordCountInEachDoc[fileName]
                 quit() '''
                 self.topicIsFixed[docID] = (True, directoryPath) if knowTopic else (False, "") ##TO DO!!want to keep only the topic name
