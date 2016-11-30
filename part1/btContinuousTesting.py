@@ -1,7 +1,7 @@
 import os
 from collections import deque
 
-class TestingBinaryTree:
+class TestingBinaryTreeContinuous:
     def __init__(self, trainedModel, directory):
         self.modelObj = trainedModel
         self.directory = directory
@@ -28,26 +28,25 @@ class TestingBinaryTree:
             else:
                 self.confidenceMatrix[1] += 1
 
-    def testOnTree(self, words, root):
+    def testOnTree(self, wordCounter, root):
         if root.decision == None:
-            if root.attribute in words:
-                return self.testOnTree(words, root.right)
+            if wordCounter[root.attribute] <= root.threshold:
+                return self.testOnTree(wordCounter, root.left)
             else:
-                return self.testOnTree(words, root.left)
-
+                return self.testOnTree(wordCounter, root.right)
         return 'spam' if root.decision == True else 'notspam'
 
     def testDocuments(self, classType):
         directoryPath = self.directory + '/test/' + classType
         for fileName in os.listdir(directoryPath):
             with open(directoryPath + '/' + fileName) as document:
-                wordList = self.modelObj.processCorpus.fetchTokens(document)
-                root = self.modelObj.binaryTree.root
-                result = self.testOnTree(wordList, root)
+                wordCounter = self.modelObj.processCorpus.getWordsInDocument(document)
+                root = self.modelObj.btc.root
+                result = self.testOnTree(wordCounter, root)
                 self.updateConfidenceMatrix(classType, result)
 
     def displayFour(self):
-        root = self.modelObj.binaryTree.root
+        root = self.modelObj.btc.root
         q = deque([root])
         q.append('#')
         count = 0
@@ -71,7 +70,7 @@ class TestingBinaryTree:
         for entry in result:
             print "Layer ", iteration, ": ", entry    
             iteration += 1
-           
+    
     def display(self, node, depth = 0):
         if depth == 4:
             return
@@ -95,5 +94,5 @@ class TestingBinaryTree:
         self.testDocuments('notspam')
         self.displayAccuracy()
         self.displayFour()
-        #root = self.modelObj.binaryTree.root
+        #root = self.modelObj.naryTree.root
         #self.display(root)
