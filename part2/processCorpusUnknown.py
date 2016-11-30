@@ -9,13 +9,14 @@ All file reading in this class
 class ProcessCorpusUnknown:
     def __init__(self, directory, probKnowTopic = 1.):
         self.directory = directory
-        self.docsAndWords = Counter() # stores the number of words and the number of documents for all topics as tuples.
+        self.docsAndWords = Counter() # stores the number of words and the number of documents (with known topic) for all topics as tuples.
         self.wordCountMappingMultinomial = Counter() # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
         self.wordCountMappingBernoulli = Counter() # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
         self.totalDocs = 0 #total number of docs with *known* topic because used for the prob calculation
         self.totalWords = 0 #total number of words in *all* docs, with known or unknown topic
         self.probKnowTopic = probKnowTopic #probability that we know the topic of a given document
         self.wordCountInEachDoc = Counter() #stores key = document ID, value = Counter object reference (count of each word's occurrence in the given doc) 
+        self.totalWordsInEachDoc = Counter() #stores key = document ID, value = total words
         self.topicIsFixed = {} #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
         self.unknownWordCount = 0
         self.unknownDocCount = 0
@@ -111,19 +112,20 @@ class ProcessCorpusUnknown:
         return tokens
 
     # Counts w|c; total number of words in a document
-    def countWordsInDocument(self, wordFreqMultinomial, wordFreqBernoulli, document):
+    def countWordsInDocument(self, wordFreqMultinomial, wordFreqBernoulli, document, knowTopic):
         flag = set() # Keeps track of word that has already been counted once for a particular document - For Bernoulli Model
         count = 0 # Counts total number of words in document
         docWordFreq = Counter()
         for entry in self.fetchTokens(document):
             count += 1 
             docWordFreq[entry] += 1 #store word count data for this individual document
-            self.wordFreqInCorpus[entry] += 1
-            wordFreqMultinomial[entry] += 1
-            if entry in flag:
-                continue
-            wordFreqBernoulli[entry] += 1
-            flag.add(entry)
+            self.wordFreqInCorpus[entry] += 1 #store word count for the whole corpus
+            if knowTopic: #store word count data for the topic only if the topic is known
+                wordFreqMultinomial[entry] += 1
+                if entry in flag:
+                    continue
+                wordFreqBernoulli[entry] += 1
+                flag.add(entry)
         return count, docWordFreq
         
     def creatingVector(self, wordFreqMultinomial, wordFreqBernoulli, directoryPath):
@@ -138,7 +140,7 @@ class ProcessCorpusUnknown:
             with open(directoryPath + '/' + fileName) as document:
                 docID = directoryPath + '/' + fileName
                 knowTopic = True if np.random.binomial(1, self.probKnowTopic) == 1 else False #determine whether topic is known
-                docWordCount, docWordFreq = self.countWordsInDocument(wordFreqMultinomial, wordFreqBernoulli, document) #total number of words in doc, word frequency counter
+                docWordCount, docWordFreq = self.countWordsInDocument(wordFreqMultinomial, wordFreqBernoulli, document, knowTopic) #total number of words in doc, word frequency counter
                 if knowTopic:
                     wordCount += docWordCount
                     docCount += 1
@@ -146,6 +148,7 @@ class ProcessCorpusUnknown:
                     self.unknownWordCount += docWordCount
                     self.unknownDocCount += 1
                 self.wordCountInEachDoc[docID] = docWordFreq #store word count data for this individual document
+                self.totalWordsInEachDoc[docID] = docWordCount #store total word count for this individual document
                 self.totalWords += docWordCount
                 '''print "file: ", fileName, "wordCountInDoc", self.wordCountInEachDoc[fileName]
                 quit() '''

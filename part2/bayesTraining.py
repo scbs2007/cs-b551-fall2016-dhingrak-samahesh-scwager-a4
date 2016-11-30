@@ -1,5 +1,5 @@
 from __future__ import division
-import os, string, sys, math, pickle, re, heapq
+import os, string, sys, math, pickle, re, heapq, random
 from collections import Counter
 from processCorpusUnknown import ProcessCorpusUnknown
 
@@ -80,7 +80,7 @@ class TrainingBayesModel:
         prob = Counter()
         for entry in totDocWordCountInTopics:
             docCount = totDocWordCountInTopics[entry][0]
-            prob[entry] = docCount/totalDocs
+            prob[entry] = (docCount+1)/(totalDocs+2)
             #print docCount, totalDocs, prob[entry]
         return prob
         
@@ -92,13 +92,17 @@ class TrainingBayesModel:
         
     def calculateProbWordsGivenTopic(self, probWGivenT, wordCount, pClass):
         # For now considering only words present in the training data.
-        return sum([math.log(probWGivenT[entry]) for entry in wordCount if entry in probWGivenT]) + math.log(pClass)
+#         Takes into account the case where no  words are in probWGivenT, i.e. probKnowTopic is very small
+        w = 0 + sum([math.log(probWGivenT[entry]) for entry in wordCount if entry in probWGivenT])
+        return w + math.log(pClass) if w != 0 else -1000000
         
     def assignTopicsToUnknown(self, wordCountInEachDoc, topicIsFixed, probWGivenTopic, probTopic): 
         '''assign max prob topic to each doc whose topic is unknown
         TO DO: assign randomly when the number of docs with known topics is small or zero'''
+        change = False #true if a document changed topic assignment, i.e., convergence has not occurred
         for docID, (fixed, topicID) in topicIsFixed.items():
-            if not fixed or fixed: #remove or if fixed
+            if not fixed:
+                oldtopicID = topicID
                 wordCountInDoc = wordCountInEachDoc[docID]
                 highestProbTopic, prob = "", -100000
                 for topic, probT in probTopic.items():
@@ -106,73 +110,89 @@ class TrainingBayesModel:
                     if probTopicGivenDoc > prob:
                         highestProbTopic, prob = topic, probTopicGivenDoc
 #                         print "highestProbTopic", highestProbTopic, "prob", prob
+                if not highestProbTopic: highestProbTopic = random.choice([topic for topic in probTopic]) #assign randomly
                 topicIsFixed[docID] = (False, highestProbTopic)
+                if highestProbTopic != topicID: change = True #an assignment was changed
+        return change 
                 
-    def updateCountsAndProbabilities(self):
-        '''update the following after assigningTopicsToUnknown:
-        wordCountInTopicsMultinomial_updated = wordCountInTopicsMultinomial + new words assigned to the topic
-        wordCountInTopicsBernoulli_updated = wordCountInTopicsBernoulli + new words assigned to the topic
-        totDocWordCountInTopics_updated = totDocWordCountInTopics + new tot doc and word count
-        totalDocs = all docs, fixed or not, after 1st round
-        probTopic = update using totDocWordCountInTopics_updated
-        self.probWGivenTopic_Multinomial = self.calculateProbWGivenTopics_Multinomial(wordCountInTopicsMultinomial, totDocWordCountInTopics)
-        self.probWGivenTopic_Bernoulli = self.calculateProbWGivenTopics_Bernoulli(wordCountInTopicsBernoulli, totDocWordCountInTopics)
-'''
+    def updateTotDocWordCountInTopics(self, totDocWordCountInTopics, totalWordsInEachDoc, topicIsFixed):
+        '''updates the number of words and the number of documents for all topics as tuples'''
+        updatedTotDocWordCountInTopics = Counter()
+        for topic, (totDocs, totWords) in totDocWordCountInTopics.items(): #start with the known values
+            for docID, (isFixed, docTopic) in topicIsFixed.items(): #add the count of the docs temporarily added to this topic
+                if not isFixed and docTopic == topic:
+                    totWords += totalWordsInEachDoc[docID]
+                    totDocs += 1
+            updatedTotDocWordCountInTopics[topic] = (totDocs, totWords)
+        return updatedTotDocWordCountInTopics
+                    
+    def updateWordCountInTopicsBernoulli(self, wordCountInTopicsBernoulli, wordCountInEachDoc, topicIsFixed):
+        updateWordCountInTopicsBernoulli = Counter()
+        for topic, wordCount in wordCountInTopicsBernoulli.items(): #start with word count of fixed documents
+            for docID, (isFixed, docTopic) in topicIsFixed.items(): #add the count of the docs temporarily assigned to this topic
+                if not isFixed and docTopic == topic:
+                    for entry in wordCountInEachDoc[docID]:
+                        wordCount[entry] += 1
+            updateWordCountInTopicsBernoulli[topic] = wordCount
+        return updateWordCountInTopicsBernoulli
 
     def train(self):
         print "Training Bayes Net Model."
         print "Creating Vector."
         self.processCorpus.calculate()
 
+        '''Initial values, probabilities'''
+        '''These values will never change'''
+        wordCountInEachDoc = self.processCorpus.wordCountInEachDoc # stores key: doc ID, value = counter object reference for the doc (counts only docs with *known* topic)
+        wordFreqInCorpus = self.processCorpus.wordFreqInCorpus
+        totalKnownDocs = self.processCorpus.totalDocs #total number of docs with *known* topic because used for the prob calculation
+        totalWords = self.processCorpus.totalWords #total number of words in *all* docs, with known or unknown topic
+        totalWordsInEachDoc = self.processCorpus.totalWordsInEachDoc #total number of words in *each* doc
+        
+        '''These values will be updated'''
+        topicIsFixed = self.processCorpus.topicIsFixed #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
+        totDocWordCountInTopics = self.processCorpus.docsAndWords # stores the number of words and the number of documents for all topics as tuples.
+        totalDocs = totalKnownDocs 
         wordCountInTopicsMultinomial = self.processCorpus.wordCountMappingMultinomial # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
         wordCountInTopicsBernoulli = self.processCorpus.wordCountMappingBernoulli # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
-        totDocWordCountInTopics = self.processCorpus.docsAndWords # stores the number of words and the number of documents for all topics as tuples.
-        topicIsFixed = self.processCorpus.topicIsFixed #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
-        wordCountInEachDoc = self.processCorpus.wordCountInEachDoc # stores key: doc ID, value = counter object reference for the doc (counts only docs with *known* topic)
-        totalDocs = self.processCorpus.totalDocs #total number of docs with *known* topic because used for the prob calculation
-        totalWords = self.processCorpus.totalWords #total number of words in *all* docs, with known or unknown topic
-        wordFreqInCorpus = self.processCorpus.wordFreqInCorpus
+        
+        '''Initial probability calculations'''
         self.probTopic = self.calculateProbTopic(totDocWordCountInTopics, totalDocs)
         self.probWord = self.calculateProbWord(wordFreqInCorpus, totalWords)
-        
         self.probWGivenTopic_Multinomial = self.calculateProbWGivenTopics_Multinomial(wordCountInTopicsMultinomial, totDocWordCountInTopics)
         self.probWGivenTopic_Bernoulli = self.calculateProbWGivenTopics_Bernoulli(wordCountInTopicsBernoulli, totDocWordCountInTopics)
-
-        probTopicGivenWord, s = self.findTop10WordsGivenTopic()
-        with open("distinctive_words.txt", "w") as text_file:
-            text_file.write(s)
-
+  
+        '''Iterations and updates'''
+        '''assign topics to unassigned docs'''
         print "before assigning topics\n\n"
         counter = 0
         for entry, (fixed, topic) in topicIsFixed.items():
-            if counter < 100:
-              print entry, fixed, topic
+            if counter < 20: print entry, fixed, topic
             counter += 1
-        '''
-        TO DO:
-        special case where probKnowTopic == 0: assign docs randomly on the first round.
-        if probKnowTopic < 0.1:
-            self.assignTopicsRandomly()
-        else:
-            do what is below
-        '''
-#         self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Multinomial, probTopic)
-        self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic)
+        converged = self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic)
         print "after assigning topics\n\n"
         counter = 0
         for entry, (fixed, topic) in topicIsFixed.items():
-            if counter < 100:
-              print entry, fixed, topic
+            if counter < 20: print entry, fixed, topic
             counter += 1
             
-        '''
-        while not converged (how to check this?):
-            self.updateCountsAndProbabilities()
-            self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, probTopic)
-        
-        '''
+        '''iterative assignment. TO DO: delete last line of loop'''
+        while not converged:
+            '''update counts'''
+            totalDocs = len(topicIsFixed) #now, all docs have been assigned
+            updatedTotDocWordCountInTopics = self.updateTotDocWordCountInTopics(totDocWordCountInTopics, totalWordsInEachDoc, topicIsFixed) #update doc word count for each topic with newly assigned docs
+    #         print "old", totDocWordCountInTopics, "updated", updatedTotDocWordCountInTopics
+            updatedWordCountInTopicsBernoulli = self.updateWordCountInTopicsBernoulli(wordCountInTopicsBernoulli, wordCountInEachDoc, topicIsFixed) # stores key = topic name, value = Counter object reference (count of each word's occurrence in all docs combined)
+            #not updating the multinomial for now'''
+            '''update probabilities'''
+            self.probTopic = self.calculateProbTopic(updatedTotDocWordCountInTopics, totalDocs)
+            self.probWGivenTopic_Bernoulli = self.calculateProbWGivenTopics_Bernoulli(updatedWordCountInTopicsBernoulli, updatedTotDocWordCountInTopics)
+            '''update document assignments once again'''
+            converged = self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic)
+            converged = True #TO DO: delete this line once the assignment is working correctoy
 
-
-        
-
-    
+        '''Processing the results'''
+        probTopicGivenWord, s = self.findTop10WordsGivenTopic()
+        with open("distinctive_words.txt", "w") as text_file:
+            text_file.write(s)
+      
