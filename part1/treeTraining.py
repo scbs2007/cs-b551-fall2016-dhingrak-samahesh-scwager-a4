@@ -3,7 +3,7 @@ import os, string, sys, math, pickle, re
 from collections import Counter
 
 from binaryTree import BinaryTree
-from naryTree import NaryTree
+from binaryTreeContinuous import BinaryTreeContinuous
 from processCorpus import ProcessCorpus
 
 class TrainingTreeModel:
@@ -11,7 +11,7 @@ class TrainingTreeModel:
         self.directory = directory
         self.processCorpus = ProcessCorpus(directory)
         self.binaryTree = None
-        self.naryTree = None
+        self.btc = None
         '''
         each list element contains a counter dict for each word in a given document.
         for bernoulli, simply check whether word is in the counter dict. for multinomial, look at the word's value
@@ -27,6 +27,5 @@ class TrainingTreeModel:
         self.binaryTree = BinaryTree(self.processCorpus, self.documentDictListSpam, self.documentDictListNotSpam)
         self.binaryTree.dtLearning()
 
-        self.naryTree = NaryTree(self.processCorpus)
-        self.naryTree.train()
-
+        self.btc = BinaryTreeContinuous(self.processCorpus, self.documentDictListSpam, self.documentDictListNotSpam)
+        self.btc.dtLearning()

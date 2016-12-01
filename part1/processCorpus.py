@@ -82,7 +82,7 @@ class ProcessCorpus:
         if word == '':
             return False
        
-        if any(ch in self.remove for ch in word):
+        if any(ch in word for ch in self.remove):
             return False 
 
         if str.isdigit(word):

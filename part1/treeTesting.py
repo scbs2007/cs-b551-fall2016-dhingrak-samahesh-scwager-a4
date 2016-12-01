@@ -1,5 +1,5 @@
 from btTesting import TestingBinaryTree
-from ntTesting import TestingNaryTree
+from btContinuousTesting import TestingBinaryTreeContinuous
 
 class TestingTreeModel:
     def __init__(self, directory):
@@ -8,5 +8,5 @@ class TestingTreeModel:
     def testDocuments(self, modelObj):
         binary = TestingBinaryTree(modelObj, self.directory)
         binary.test()
-        nary = TestingNaryTree(modelObj, self.directory)
-        nary.test()
+        btc = TestingBinaryTreeContinuous(modelObj, self.directory)
+        btc.test()

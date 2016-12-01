@@ -1,3 +1,5 @@
+# Implemented ID3 Algorithm
+
 from __future__ import division
 import math, itertools, sys
 from binaryNode import BinaryNode
@@ -21,14 +23,14 @@ class BinaryTree:
         self.documentDictListNotSpam = notSpamDocuments
 
     def dtLearning(self):
-        print "Training Binary Decision Tree Model... Please wait..."
+        print "Training Decision Tree Model for binary attributes... Please wait..."
         #pool = ThreadPool(10) # Thread pool 
         rootWord = self.mostImportantWordForRoot() # Split on this word #print rootWord
         root = BinaryNode(attribute=rootWord)
         root.setIgnoreWords(set([rootWord]))
         root.setSpamDocsIndexes(*self.createDocsIndexListForRoot(self.documentDictListSpam, rootWord))
         root.setNotSpamDocsIndexes(*self.createDocsIndexListForRoot(self.documentDictListNotSpam, rootWord))
-        maxTreeHeight = 21 # Height uptil which tree is to be built - Found this value via experimenting for max accuracy.
+        maxTreeHeight = 20 # Height uptil which tree is to be built - Found this value via 5 fold cross validation.
         self.buildTree(root, maxTreeHeight)
         self.root = root
         
@@ -169,7 +171,7 @@ class BinaryTree:
     
     def checkNoSubset(self, indexSpamDocsWithWord, indexSpamDocsWithoutWord, indexNotSpamDocsWithWord, indexNotSpamDocsWithoutWord):
         # No subset of records found
-        if indexSpamDocsWithWord == [] and indexSpamDocsWithoutWord == [] and indexNotSpamDocsWithWord == [] and indexNotSpamDocsWithoutWord == []:
+        if (indexSpamDocsWithWord == [] and indexNotSpamDocsWithWord == []) or (indexSpamDocsWithoutWord == [] and indexNotSpamDocsWithoutWord == []):
             return True
         return False
  
