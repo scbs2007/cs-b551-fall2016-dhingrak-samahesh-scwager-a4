@@ -7,11 +7,11 @@ class TrainingBayesModel:
     def __init__(self, directory, probKnowTopic = 1.):
         self.directory = directory
         self.probKnowTopic = probKnowTopic
-        self.processCorpus = ProcessCorpusUnknown("./train", self.probKnowTopic)
+        self.processCorpus = ProcessCorpusUnknown(directory, self.probKnowTopic)
         self.totTrainingDocs = 0
         self.docTopics = {} #probability of each of the 20 topics
-        self.probWGivenTopic_Multinomial = {} #probability of each word given each topic
-        self.probWGivenTopic_Bernoulli = {}
+        self.probWGivenTopic_Multinomial = Counter() #probability of each word given each topic
+        self.probWGivenTopic_Bernoulli = Counter()
         self.probTopic = Counter()
         self.probWord = Counter() #probability of each word occurring in the corpus
         

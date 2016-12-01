@@ -34,113 +34,30 @@ class TestingBayesModel:
             if classType == 'notspam':
                 confidenceMatrix[3] += 1
 
-    def testModel(self, classType, pSpam, pNotSpam, probWGivenNotSpam, probWGivenSpam, confidenceMatrix, threshold, fetchTokens, modelName):
-        directoryPath = self.directory + '/test/' + classType
-        
+    def testModel(self, probTopic, probWord, probWGivenTopic, confidenceMatrix, fetchTokens):
+        probTGivenW = Counter()
+        topics = [os.path.join(self.directory, topicName) for topicName in os.listdir(self.directory) if os.path.isdir(os.path.join(self.directory, topicName))]
+        for topic in topics:
+            return
         for fileName in os.listdir(directoryPath):
             with open(directoryPath + '/' + fileName) as document:
-                wordCount = fetchTokens(document)
-
-                probIsSpam = self.calculateProbWordsGivenS(probWGivenNotSpam, wordCount, pNotSpam)
-                probIsNotSpam = self.calculateProbWordsGivenS(probWGivenSpam, wordCount, pSpam)
-                
+                wordList = set( fetchTokens(document) ) #TO DO: check that using "set" is correct: don't want to count the same word multiple times
+                    for topic in probTopic:
+                        probTGivenW[topic] =  self.calculateProbWordsGivenTopic(probWGivenTopic, wordList, probTopic)
+              
                 #print "\nFile Name: ", fileName, "Type: ", classType
-                oddsRatio = probIsSpam/probIsNotSpam
-                #print "Odds Ratio: ", oddsRatio
-                
-                self.bernoulliThresh(oddsRatio, confidenceMatrix, threshold, classType)
-                    
-    # Top 10 least associated with spam
-    def leastAssociated(self, prob):
-        return heapq.nsmallest(10, prob, key=prob.get)
-
-    # Top 10 most associated with spam
-    def mostAssociated(self, prob):
-        return heapq.nlargest(10, prob, key=prob.get)
-
-    def displayList(self, l):
-        for entry in l:
-            print entry + " ", 
-        print "\n"
-
-    def findTop10(self, model):
-        probWS = model.probWGivenSpam_Multinomial
-        probS = model.pSpam
-        probSW = Counter()
-
-        for word in model.processCorpus.allWordsInCorpus:
-            probW = (model.processCorpus.wordCountInSpam_Multinomial[word] + model.processCorpus.wordCountInNotSpam_Multinomial[word])/ \
-                (model.processCorpus.totWordsInNotSpam + model.processCorpus.totWordsInSpam)
-            probSW[word] = probWS[word] * probS / probW
-
-        print "Top 10 words most associated with spam: "
-        self.displayList(self.mostAssociated(probSW))
-
-        print "Top 10 words least associated with spam: "
-        self.displayList(self.leastAssociated(probSW))
-        '''
-        prob1 = model.probWGivenSpam_Multinomial
-        prob2 = model.probWGivenSpam_Bernoulli
-        
-        prob3 = model.probWGivenNotSpam_Multinomial
-        prob4 = model.probWGivenNotSpam_Bernoulli
-
-        probSpam = model.pSpam
-        pNotSpam = model.pNotSpam
-        
-        set1 = self.mostAssociated(prob1)
-        set2 = self.mostAssociated(prob2)
-        print "Top 10 words most associated with spam: " 
-        print "Multinomial: "
-        self.displayList(set1)
-        print "Bernoulli: "
-        self.displayList(set2)
-
-        set3 = self.leastAssociated(prob3)
-        set4 = self.leastAssociated(prob4)
-        print "\n\nTop 10 words least associated with spam: "
-        print "Multinomial: "
-        self.displayList(set3)
-        print "Bernoulli: "
-        self.displayList(set4)
-        '''
-             
+                                                 
     def testDocuments(self, modelObj):
-        pSpam = modelObj.pSpam
-        pNotSpam = modelObj.pNotSpam
-        probWGivenNotSpam_Bernoulli = modelObj.probWGivenNotSpam_Bernoulli
-        probWGivenSpam_Bernoulli = modelObj.probWGivenSpam_Bernoulli
-        probWGivenNotSpam_Multinomial = modelObj.probWGivenNotSpam_Multinomial
-        probWGivenSpam_Multinomial = modelObj.probWGivenSpam_Multinomial
+        probTopic = modelObj.probTopic
+        probWord = modelObj.probWord
+        probWGivenTopic_Bernoulli = modelObj.probWGivenTopic_Bernoulli
 
         # 0 - true positive, 1 - false negative, 2 - false positive, 3 - true negative
-        confidenceMatrix_Bernoulli = [0, 0, 0, 0]
-        confidenceMatrix_Multinomial = [0, 0, 0, 0]      
+        confidenceMatrix_Bernoulli = np.zeros((20,20))
 
-        # Testing Bernoulli Model
-        threshold = 0.4509 
-
-        # Testing spam Folder
-        print "Testing with binary vector..."
-        self.testModel('spam', pSpam, pNotSpam, probWGivenNotSpam_Bernoulli, probWGivenSpam_Bernoulli, confidenceMatrix_Bernoulli, threshold, modelObj.processCorpus.fetchTokens, 'bernoulli') 
-
-        # Testing notspam Folder
-        self.testModel('notspam', pSpam, pNotSpam, probWGivenNotSpam_Bernoulli, probWGivenSpam_Bernoulli, confidenceMatrix_Bernoulli, threshold, modelObj.processCorpus.fetchTokens, 'bernoulli')
+        # Testing each topic folder
+        self.testModel(probTopic, probWord, probWGivenTopic, confidenceMatrix_Bernoulli, modelObj.processCorpusUnknown.fetchTokens)
         self.displayAccuracy(confidenceMatrix_Bernoulli)
-        
-        # Testing Multinomial Model
-        threshold = 1.5808 #0.595271488128
-        print "Testing with raw count vector..."
-        self.testModel('spam', pSpam, pNotSpam, probWGivenNotSpam_Multinomial, probWGivenSpam_Multinomial, confidenceMatrix_Multinomial, \
-                        threshold, modelObj.processCorpus.fetchTokens, 'multinomial')
 
-        self.testModel('notspam', pSpam, pNotSpam, probWGivenNotSpam_Multinomial, probWGivenSpam_Multinomial, confidenceMatrix_Multinomial, \
-                        threshold, modelObj.processCorpus.fetchTokens, 'multinomial')
-        self.displayAccuracy(confidenceMatrix_Multinomial)
-        self.findTop10(modelObj)
-        #print "OB: ", min(ob)
-        #print "OB: max", max(ob)
-        #print "OM: ", min(om)
-        #print "OM: max ", max(om)
 
 
