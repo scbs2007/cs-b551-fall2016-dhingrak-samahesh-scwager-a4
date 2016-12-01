@@ -4,6 +4,7 @@ import numpy as np
 
 '''
 All file reading in this class
+python topics.py test ./test model.txt
 '''
 
 class ProcessCorpusUnknown:
@@ -128,11 +129,11 @@ class ProcessCorpusUnknown:
                 flag.add(entry)
         return count, docWordFreq
         
-    def creatingVector(self, wordFreqMultinomial, wordFreqBernoulli, directoryPath):
+    def creatingVector(self, wordFreqMultinomial, wordFreqBernoulli, topicName):
         ''' read in words from file and store information about each individual doc. 
         choose randomly with given probability whether topic is known or unknown.
         if known, update topic information. if not, update count of unknown documents.'''
-        
+        directoryPath = os.path.join(self.directory, topicName)
         docCount = 0 # Total documents for this topic in training data
         wordCount = 0 # Count of words in this topic
         # Reading all files in topic subdirectory
@@ -152,11 +153,12 @@ class ProcessCorpusUnknown:
                 self.totalWords += docWordCount
                 '''print "file: ", fileName, "wordCountInDoc", self.wordCountInEachDoc[fileName]
                 quit() '''
-                self.topicIsFixed[docID] = (True, directoryPath) if knowTopic else (False, "") ##TO DO!!want to keep only the topic name
+                self.topicIsFixed[docID] = (True, topicName) if knowTopic else (False, "") ##TO DO!!want to keep only the topic name
         return (docCount, wordCount)
 
     def calculate(self):
-        topics = [os.path.join(self.directory, topicName) for topicName in os.listdir(self.directory) if os.path.isdir(os.path.join(self.directory, topicName))]
+#         topics = [(topicName, os.path.join(self.directory, topicName)) for topicName in os.listdir(self.directory) if os.path.isdir(os.path.join(self.directory, topicName))]
+        topics = [topicName for topicName in os.listdir(self.directory) if os.path.isdir(os.path.join(self.directory, topicName))]
         self.unknownWordCount = 0
         self.unknownDocCount = 0
                         
