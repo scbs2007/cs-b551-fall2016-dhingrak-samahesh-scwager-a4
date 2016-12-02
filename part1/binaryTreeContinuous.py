@@ -15,7 +15,7 @@ class BinaryTreeContinuous:
 
     # Returns a list of tuples - (Counter obj, Class). True = spam; False = not spam
     def combineCorpus(self):
-        # Combining the corpus will make things easy. Can optimize later if need be.
+        # Combining the corpus will make things easy. TODO optimize later 
         return [(entry, True) for entry in self.spamDocs] + [(entry, False) for entry in self.notSpamDocs]
 
     def getWordsToConsider(self, toIgnore):
@@ -34,10 +34,7 @@ class BinaryTreeContinuous:
         if decision == None:
             # Set decision for parent to class having higher count
             node.setDecision(self.findClassWithHigherCount(node))
-            #print "In set decision if. Decision: ", node.decision
-            #sys.exit(0)
         else:
-            #print "In set decision else. Decision: ", node.decision
             node.setDecision(decision)
    
     def findCountOfClassInData(self, data):
@@ -56,11 +53,9 @@ class BinaryTreeContinuous:
         dataAndClassRight = node.rightDataAndClass
 
         spamCount, notSpamCount = self.findCountOfClassInData(dataAndClassLeft)
-        #print "spam count, not spam count: ", spamCount, notSpamCount
         counts = self.findCountOfClassInData(dataAndClassRight)
         spamCount += counts[0]
         notSpamCount += counts[1]
-        #print "spam count, not spam count: ", spamCount, notSpamCount
         return True if spamCount > notSpamCount else False
     
     def findRootWord(self, allDataAndClass):
@@ -68,11 +63,6 @@ class BinaryTreeContinuous:
         entropiesAndThresh = map(self.getEntropyAndThresh, zip(self.allWords, itertools.repeat(allDataAndClass, len(words))))
         minEntropyAndThresh = min(entropiesAndThresh, key=itemgetter(0))
         minIndex = entropiesAndThresh.index(minEntropyAndThresh)
-        '''print "Entropies and thresh: ", entropiesAndThresh
-        print "Index: ", minIndex
-        print "Min Entropy and thresh: ", entropiesAndThresh[minIndex]
-        print "word: ", words[minIndex]
-        '''
         return words[minIndex], minEntropyAndThresh[1] # Return word and the value of freq for this word at which min entropy was found
 
     def findLeftAndRightData(self, allDataAndClass, threshold, bestSplitWord):
@@ -96,7 +86,7 @@ class BinaryTreeContinuous:
             return (False, None)
     
     def dtLearning(self):
-        print "Training Decision Tree Model for continuous values... Please wait..."
+        print "Training Decision Tree Model - continuous values (C4.5 Algorithm)... Please wait..."
         height = 19 # Height uptil which to build the tree - Found via 5 fold cross validation
         root = BinaryNodeContinuous()
         allDataAndClass = self.combineCorpus()
@@ -108,7 +98,6 @@ class BinaryTreeContinuous:
         #print bestSplitWord, threshold
         #print root.leftDataAndClass[0][0]#['jalapeno'], 
         #print root.rightDataAndClass[0][0]#['jalapeno'] 
-        #sys.exit(0)
         self.buildTree(root, height)
         self.root = root
 
@@ -164,17 +153,6 @@ class BinaryTreeContinuous:
         wordList = list(self.getWordsToConsider(node.ignoreWords))
         numberOfWords = len(wordList)
 
-        #if node.attribute  == 'yellow':
-        '''print node.attribute, node.threshold
-        print "Left: "
-        for entry in node.leftDataAndClass:
-            print entry[0][node.attribute], 
-        print "Right: "
-        for entry in node.rightDataAndClass:
-            print entry[0][node.attribute],
-        sys.exit(0)
-        '''
-
         # Entropy Calculation
         if branch == 'left':
             entropiesAndThresh = map(self.getEntropyAndThresh, zip(wordList, itertools.repeat(node.leftDataAndClass, numberOfWords)))
@@ -188,12 +166,6 @@ class BinaryTreeContinuous:
             minIndex = entropiesAndThresh.index(minEntropyAndThresh)
             #return words[minIndex], minEntropyAndThresh[1] # Return word and the value of freq for this word at which min entropy was found
             #print "Right: ", wordList[minIndex]
-        '''print "Entropies and thresh: ", entropiesAndThresh
-        print "Index: ", minIndex
-        print "Min Entropy and thresh: ", entropiesAndThresh[minIndex]
-        print "word: ", words[minIndex]
-        '''
- 
         #print "Entropy: ", min(entropies) 
         bestWord = wordList[minIndex]
         newNode = BinaryNodeContinuous(attribute=bestWord)
@@ -216,17 +188,6 @@ class BinaryTreeContinuous:
         # Entropies for splits at all unique frequencies of the word
         entropies = map(self.calculateEntropy, zip(itertools.repeat(counterClassWithFreq, numberOfValues), freqValues))
         minIndex = entropies.index(min(entropies))
-        '''if word == 'jalapeno':
-            print "Entropies: ", entropies
-            print "Index: ", minIndex
-            print "Min Entropy: ", entropies[minIndex]
-            print "Min Freq: ", list(freqValues)[minIndex]
-        '''
-        '''print "Entropies: ", entropies
-        print "Index: ", minIndex
-        print "Min Entropy: ", entropies[minIndex]
-        print "Min Freq: ", list(freqValues)[minIndex]
-        sys.exit(0)'''
         return entropies[minIndex], freqValues[minIndex] # Return min entropy and the value of freq of word at which this min entropy was obtained
        
     def calculateEntropy(self, argument): 
@@ -251,7 +212,7 @@ class BinaryTreeContinuous:
         #print "Entropy: ", self.entropyHelper(positiveCountSpam, negativeCountSpam, positiveCountNotSpam, negativeCountNotSpam)
         return self.entropyHelper(positiveCountSpam, negativeCountSpam, positiveCountNotSpam, negativeCountNotSpam)
                 
-    # Returns sorted list - [((Counter, class), frequency of word)] and list - all Frequencies for word
+    # Returns [((Counter, class), frequency of word)] and [all Frequencies for word]
     def fetchDataAndFrequency(self, counterWithClass, word):
         counterClassWithFreq = []
         allFreq = set([])
@@ -260,7 +221,7 @@ class BinaryTreeContinuous:
             freq = eachDoc[0][word]
             counterClassWithFreq.append((eachDoc, freq))
             allFreq.add(freq)
-        return sorted(counterClassWithFreq, key=itemgetter(1)), list(allFreq)
+        return counterClassWithFreq, list(allFreq)
 
     def entropyHelper(self, positiveCountSpam, negativeCountSpam, positiveCountNotSpam, negativeCountNotSpam):
         totSpam = positiveCountSpam + negativeCountSpam

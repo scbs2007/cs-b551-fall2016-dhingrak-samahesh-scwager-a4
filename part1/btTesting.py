@@ -38,7 +38,7 @@ class TestingBinaryTree:
         return 'spam' if root.decision == True else 'notspam'
 
     def testDocuments(self, classType):
-        directoryPath = self.directory + '/test/' + classType
+        directoryPath = self.directory + '/' + classType
         for fileName in os.listdir(directoryPath):
             with open(directoryPath + '/' + fileName) as document:
                 wordList = self.modelObj.processCorpus.fetchTokens(document)

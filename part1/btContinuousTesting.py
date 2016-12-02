@@ -65,7 +65,7 @@ class TestingBinaryTreeContinuous:
                 node = q.popleft()
             q.append('#') 
             count += 1
-        print "\n\nTop 4 layers of the tree: (Left branch - Word was absent. Right branch - Word was present.)"
+        print "\n\nTop 4 layers of the tree:"
         iteration = 1
         for entry in result:
             print "Layer ", iteration, ": ", entry    
