@@ -57,8 +57,10 @@ Difficulty faced:
 1. We found after a lot of experimenting that the bayes model is highly dependent on the words that are taken into consideration.
 At the beginning when we started on the assignment we were getting around 90% accuracy for binary attribute values.
 But at present after we have filtered out a lot of words (stop words and unnecessary html tags, email headers) the accuracy percentage has reduced drastically.
-So determining which words to filter out was a huge problem.
-We had to stick with the present result.
+So determining which words to filter out was a huge problem. We had to stick with the present result.
+
+Moreover if we do not add all the present filters, the top 10 words least and most associated with spam all turn out to be junk words/ words specific to email/ html tags.
+
 2. Choosing the odds ratio via experimenting was also difficult. This took a great amount of time.
 3. 5 fold cross validation has been done to find the optimal heiht of the tree. This also took a lot of time.
 
@@ -69,12 +71,12 @@ For Bayes Model:
 
 Testing with binary vector...
 
-Accuracy Percentage:  61.82
+Accuracy Percentage:  62.02
 Confidence Matrix:
-True Positive:  1031
-False Negative:  821
-False Positive:  154
-True Negative:  548
+True Positive:  1023
+False Negative:  808
+False Positive:  162
+True Negative:  561
 
 
 Testing with raw count vector...

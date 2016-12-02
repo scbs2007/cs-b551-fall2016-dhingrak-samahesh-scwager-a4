@@ -139,7 +139,7 @@ class TestingBayesModel:
         print "Total time that will be taken is around 8.91 minutes."
         ####################################################################################################################
         # Testing Bernoulli Model
-        threshold = 1.474 #1.45123570212 #1.40139 #1.29515748155 #1.71648006886#2.1 #2.10000001
+        threshold = 1.469 #1.45123570212 #1.40139 #1.29515748155 #1.71648006886#2.1 #2.10000001
 
         # Testing spam Folder
         print "Testing with binary vector..."
