@@ -20,11 +20,15 @@ class TestingBayesModel:
         print s
                 
     def calculateProbWordsGivenTopic(self, probWGivenT, wordCount, pClass):
+#         Takes into account the case where no words are in probWGivenT, i.e. probKnowTopic is zero or nearly zero
         return sum([math.log(probWGivenT[entry]) if entry in wordCount else \
-        math.log(1 - probWGivenT[entry]) if probWGivenT[entry] > 0 else 0 for entry in probWGivenT]) + math.log(pClass)
-                
+        math.log(1 - probWGivenT[entry]) if probWGivenT[entry] > 0 else 0 for entry in probWGivenT]) + math.log(pClass)   
+                      
     def testModelHelp(self, currTopicIndex, topicList, probTopic, probWord, probWGivenTopic, confidenceMatrix, fetchTokens, topicName, directoryPath):
+        counter = 0
         for fileName in os.listdir(directoryPath):
+            if counter > 20: return
+            counter += 1
             with open(directoryPath + '/' + fileName) as document:
                 wordSet = set( fetchTokens(document) )
                 prob, idx = -100000, -1

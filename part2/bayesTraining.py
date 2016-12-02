@@ -36,7 +36,7 @@ class TrainingBayesModel:
         w = 0 + sum([math.log(probWGivenT[entry]) for entry in wordCount if entry in probWGivenT])
         if w == 0: 
             return -1000000
-        return w + math.log(pClass) + sum([1-math.log(probWGivenT[entry]) for entry in probWGivenT if entry not in wordCount])            
+        return w + math.log(pClass) + sum([math.log(1-probWGivenT[entry]) for entry in probWGivenT if entry not in wordCount])            
 
         
     def calculateProbTopicGivenWord(self, probWT, probT):
