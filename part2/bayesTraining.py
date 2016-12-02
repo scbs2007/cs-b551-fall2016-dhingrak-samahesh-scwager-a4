@@ -165,7 +165,7 @@ class TrainingBayesModel:
         '''Iterations and updates'''
         '''assign topics to unassigned docs'''
         changeThresh = 100 #max number of docs that can change assignment in an iteration for the program to converge
-        if probKnowTopic < 1: print "assigning topics to docs..."
+        if self.probKnowTopic < 1: print "assigning topics to docs..."
         converged = self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic, changeThresh)
             
         while not converged:
