@@ -38,7 +38,6 @@ class TrainingBayesModel:
             return -1000000
         return w + math.log(pClass) + sum([math.log(1-probWGivenT[entry]) for entry in probWGivenT if entry not in wordCount])            
 
-        
     def calculateProbTopicGivenWord(self, probWT, probT):
         probTW = Counter()
         for word, probW in self.probWord.items():
@@ -100,8 +99,7 @@ class TrainingBayesModel:
         return prob
         
     def assignTopicsToUnknown(self, wordCountInEachDoc, topicIsFixed, probWGivenTopic, probTopic, changeThresh): 
-        '''assign max prob topic to each doc whose topic is unknown
-        TO DO: assign randomly when the number of docs with known topics is small or zero'''
+        '''assign max prob topic to each doc whose topic is unknown'''
         change = 0 #true if a document changed topic assignment, i.e., convergence has not occurred
         for docID, (fixed, topicID) in topicIsFixed.items():
             if not fixed:
@@ -116,7 +114,7 @@ class TrainingBayesModel:
                 if not highestProbTopic: highestProbTopic = random.choice([topic for topic in probTopic]) #assign randomly
                 topicIsFixed[docID] = (False, highestProbTopic)
                 if highestProbTopic != topicID: change += 1 #an assignment was changed
-        return True if change >= changeThresh else False
+        return True if change <= changeThresh else False
                 
     def updateTotDocWordCountInTopics(self, totDocWordCountInTopics, totalWordsInEachDoc, topicIsFixed):
         '''updates the number of words and the number of documents for all topics as tuples'''
@@ -167,10 +165,9 @@ class TrainingBayesModel:
         '''Iterations and updates'''
         '''assign topics to unassigned docs'''
         changeThresh = 100 #max number of docs that can change assignment in an iteration for the program to converge
-        print "assigning topics to docs..."
+        if probKnowTopic < 1: print "assigning topics to docs..."
         converged = self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic, changeThresh)
             
-        '''iterative assignment. TO DO: delete last line of loop'''
         while not converged:
             '''update counts'''
             print "new iteration: assigning topics to docs..."
@@ -183,7 +180,7 @@ class TrainingBayesModel:
             self.probTopic = self.calculateProbTopic(updatedTotDocWordCountInTopics, totalDocs)
             self.probWGivenTopic_Bernoulli = self.calculateProbWGivenTopics_Bernoulli(updatedWordCountInTopicsBernoulli, updatedTotDocWordCountInTopics)
             '''update document assignments once again'''
-            converged = self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic)
+            converged = self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic, changeThresh)
         
         '''Processing the results'''
         probTopicGivenWord, s = self.findTop10WordsGivenTopic()

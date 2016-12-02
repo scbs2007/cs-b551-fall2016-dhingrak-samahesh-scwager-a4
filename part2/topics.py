@@ -28,6 +28,9 @@ We decided to store every document as a word dictionary, despite the memory cost
 a file every time the probability of a topic given the document was computed. Still, the program takes a long time to 
 compute the Bernoulli distribution.
 
+While the top 10 word lists are convincing, the accuracy is low. Documents get more likely assigned to certain topics than
+others, no matter what the true topic is. The bug remains to be discovered.
+
 (4) answers to any questions asked below in the assignment. '''
 
 

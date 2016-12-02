@@ -50,18 +50,27 @@ class ProcessCorpusUnknown:
                         ])
  
         # Words related to email
-        self.unwanted = set(['From:', 'Subject:', 'Summary:', 'Keywords:', 'Expires:', 'Distribution:', 'Organization:', 'Supersedes:', 'Lines:', 'Archive-name:', \
+        '''self.unwanted = set(['From:', 'Subject:', 'Summary:', 'Keywords:', 'Expires:', 'Distribution:', 'Organization:', 'Supersedes:', 'Lines:', 'Archive-name:', \
                         'Alt-atheism-archive-name:', 'Last-modified:', 'Version:', 'NNTP-Posting-Host:', 'Re:', 'Nntp-Posting-Host:', 'X-Mailer:', 'Reply-To:', \
+                        'Article-I.D.:', 'X-Newsreader:', 'In-Reply-To:', 'Distribution:', \
+                        'Originator:', 'Organization:',  'Keywords:', 'News-Software:', 'VNEWS', 'VAX/VMS', 'rusnews', 'newtout', \
+                        'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat',\
+                        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' \
+                        ])'''
+        self.unwanted = set(['From:', 'Subject:', 'Summary:', 'Keywords:', 'Expires:', 'Distribution:', 'Organization:', 'Supersedes:', 'Lines:', 'Archive-name:', \
+                        'Last-modified:', 'Version:', 'NNTP-Posting-Host:', 'Re:', 'Nntp-Posting-Host:', 'X-Mailer:', 'Reply-To:', \
                         'Article-I.D.:', 'X-Newsreader:', 'In-Reply-To:', 'Distribution:', \
                         'Originator:', 'Organization:',  'Keywords:', 'News-Software:', 'VNEWS', 'VAX/VMS', 'rusnews', 'newtout', \
                         'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat',\
                         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' \
                         ])
 
-        # If token contains any of these - ignore it.
-        self.remove = set(['!', '\\', '/', ',', '.', '@', '=', '[', ']', '(', ')', ':', ';', '?', '^', '{', '}', '|', '<', '>', '"', '#', '%', '&', '+', '`', '~',\
-                             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
 
+        # If token contains any of these - ignore it.
+        '''self.remove = set(['!', '\\', '/', ',', '.', '@', '=', '[', ']', '(', ')', ':', ';', '?', '^', '{', '}', '|', '<', '>', '"', '#', '%', '&', '+', '`', '~',\
+                             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])'''
+        self.remove = set(['!', '\\', '/', ',', '@', '=', '[', ']', '(', ')', ':', ';', '?', '^', '{', '}', '|', '<', '>', '#', '%', '&', '+', '`', '~',\
+                             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
 
 
     def splitOnPunctuations(self, token, regex):
@@ -73,10 +82,10 @@ class ProcessCorpusUnknown:
         return True
         
     def toConsiderOrNotToConsider(self, word):
-        '''
+        
         if word in self.unwanted:
             return False 
-
+        '''
         if word in self.stopWords:
             return False
         '''
@@ -110,6 +119,7 @@ class ProcessCorpusUnknown:
             token = str.lower(str.lstrip(str.rstrip(token, string.punctuation), string.punctuation))
             if self.toConsiderOrNotToConsider(token):
                     tokens.append(token)
+            tokens.append(token)
         return tokens
 
     # Counts w|c; total number of words in a document

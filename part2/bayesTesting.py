@@ -24,34 +24,37 @@ class TestingBayesModel:
         return sum([math.log(probWGivenT[entry]) if entry in wordCount else \
         math.log(1 - probWGivenT[entry]) if probWGivenT[entry] > 0 else 0 for entry in probWGivenT]) + math.log(pClass)   
                       
-    def testModelHelp(self, currTopicIndex, topicList, probTopic, probWord, probWGivenTopic, confidenceMatrix, fetchTokens, topicName, directoryPath):
-        counter = 0
+    def testModelHelp(self, currTopicIndex, topicList, probTopic, probWGivenTopic, confidenceMatrix, fetchTokens, directoryPath):
+#         counter = 0
+#         print "directory", directoryPath
         for fileName in os.listdir(directoryPath):
-            if counter > 20: return
-            counter += 1
+#             if counter > 20: return
+#             counter += 1
             with open(directoryPath + '/' + fileName) as document:
+#                 print "doc", fileName
                 wordSet = set( fetchTokens(document) )
-                prob, idx = -100000, -1
+                prob, idx = -1000000, -1
                 for i, (topic, topicDir) in enumerate(topicList):
                     p =  self.calculateProbWordsGivenTopic(probWGivenTopic[topic], wordSet, probTopic[topic])
+#                     print topic, p
                     if p > prob: 
                         prob, idx = p, i
             confidenceMatrix[currTopicIndex, idx] += 1
 
-    def testModel(self, probTopic, probWord, probWGivenTopic, confidenceMatrix, fetchTokens):
+    def testModel(self, probTopic, probWGivenTopic, confidenceMatrix, fetchTokens):
         topics = [(topicName, os.path.join(self.directory, topicName)) for topicName in os.listdir(self.directory) if os.path.isdir(os.path.join(self.directory, topicName))]
         for i, (topic, topicDir) in enumerate(topics):
-            self.testModelHelp(i, topics, probTopic, probWord, probWGivenTopic, confidenceMatrix, fetchTokens, topic, topicDir)
+            self.testModelHelp(i, topics, probTopic, probWGivenTopic, confidenceMatrix, fetchTokens, topicDir)
                                                  
     def testDocuments(self, modelObj):
         probTopic = modelObj.probTopic
         probWord = modelObj.probWord
         probWGivenTopic_Bernoulli = modelObj.probWGivenTopic_Bernoulli
-
+        
         confidenceMatrix_Bernoulli = np.zeros((20,20))
 
         # Testing each topic folder
-        self.testModel(probTopic, probWord, probWGivenTopic_Bernoulli, confidenceMatrix_Bernoulli, modelObj.processCorpus.fetchTokens)
+        self.testModel(probTopic, probWGivenTopic_Bernoulli, confidenceMatrix_Bernoulli, modelObj.processCorpus.fetchTokens)
         
         self.displayAccuracy(confidenceMatrix_Bernoulli)
 
