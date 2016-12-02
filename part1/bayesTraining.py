@@ -31,7 +31,7 @@ class TrainingBayesModel:
     def train(self): 
         print "Training Bayes Model."
         print "Creating Vector."
-        self.processCorpus.calculate()
+        self.processCorpus.calculate('bayes')
 
         totSpamDocs = self.processCorpus.totSpamDocs
         totNotSpamDocs = self.processCorpus.totNotSpamDocs

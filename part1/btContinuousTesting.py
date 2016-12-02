@@ -37,7 +37,7 @@ class TestingBinaryTreeContinuous:
         return 'spam' if root.decision == True else 'notspam'
 
     def testDocuments(self, classType):
-        directoryPath = self.directory + '/test/' + classType
+        directoryPath = self.directory + '/' + classType
         for fileName in os.listdir(directoryPath):
             with open(directoryPath + '/' + fileName) as document:
                 wordCounter = self.modelObj.processCorpus.getWordsInDocument(document)
@@ -65,7 +65,7 @@ class TestingBinaryTreeContinuous:
                 node = q.popleft()
             q.append('#') 
             count += 1
-        print "\n\nTop 4 layers of the tree: (Left branch - Word was absent. Right branch - Word was present.)"
+        print "\n\nTop 4 layers of the tree:"
         iteration = 1
         for entry in result:
             print "Layer ", iteration, ": ", entry    

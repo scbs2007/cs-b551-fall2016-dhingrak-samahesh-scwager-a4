@@ -58,14 +58,11 @@ class ProcessCorpus:
                      'helvetica', 'html', 'ist', 'localhost', 'message-id', 'mon', 'mv', 'nbsp', 'pdt', 'perl', 'pgp', 'qmail', 'rpm', 'sans-serif', 'sat', \
                      'single-drop', 'smtp', 'spambayes', 'sun', 'thu', 'tue', 'unix', 'verdana', 'wed', 'x-beenthere', 'x-mailer', 'x-mailscanner', \
                      'x-originalarrivaltime:', 'x-priority', 'x-status', 'x-uid', 'xml'])
-                            
+        self.modelType = '' # To know when to apply word filters           
  
         # If token contains any of these - ignore it.
         self.remove = set(['!', '\\', '/', ',', '.', '@', '=', '[', ']', '(', ')', ':', ';', '?', '^', '{', '}', '|', '<', '>', '"', '#', '%', '&', '+', '`', '~', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
 
-    def splitOnPunctuations(self, token, regex):
-        return regex.sub('#', token).split('#')
-    
     def checkUnwanted(self, token):
         if token in self.unwanted:
             return False 
@@ -73,6 +70,7 @@ class ProcessCorpus:
         
     def toConsiderOrNotToConsider(self, word):
 
+        #if self.modelType == 'tree':
         if word in self.unwanted:
             return False 
 
@@ -85,9 +83,6 @@ class ProcessCorpus:
         if any(ch in word for ch in self.remove):
             return False 
 
-        if str.isdigit(word):
-            return False
-         
         if len(word) > 15 or len(word) < 3:
             return False
 
@@ -97,23 +92,16 @@ class ProcessCorpus:
     def fetchTokens(self, document):
         # TODO 
         tokens = []
-        #regex = re.compile('[%s]' % re.escape(string.punctuation))
         flag = True
         for token in document.read().split():
-            '''if flag:
-                if token == 'Subject:':
-                    flag = False
-                continue
-            '''
             # Remove HTML tags and URLs
             if self.checkUnwanted(token) == False or ('<' in token or '>' in token) or token.startswith('http://'):
                 #print token
                 continue
 
-            #    for entry in self.splitOnPunctuations(token, regex):
             token = str.lower(str.lstrip(str.rstrip(token, string.punctuation), string.punctuation))
             if self.toConsiderOrNotToConsider(token):
-                    tokens.append(token)
+                tokens.append(token)
         return tokens
 
     # Counts w|c for both bernoulli and multinomial; total number of words in a document
@@ -134,14 +122,11 @@ class ProcessCorpus:
         docCount = 0 # Total spam/non spam documents in training data
         wordCount = 0 # Count of words in class
         # Reading all files in train directory
-        directoryPath = self.directory + '/train/' + classType
+        directoryPath = self.directory + '/'+ classType
         for fileName in os.listdir(directoryPath):
             with open(directoryPath + '/' + fileName) as document:
                 wordCount += self.countWordsInDocument(wordFreqMultinomial, wordFreqBernoulli, document)
                 docCount += 1
-            #print "File: ", fileName
-            #for entry in wordCountInDocs:
-            #    print entry, wordCountInDocs[entry]
         return docCount, wordCount
 
     def increaseCountForWords(self, count):
@@ -194,22 +179,24 @@ class ProcessCorpus:
         del self.wordCountInNotSpam_Multinomial[entry]
         del self.wordCountInNotSpam_Bernoulli[entry]
 
-    # If from the initial Count of the words in spam/ non spam document - the count is less than 10 remove them.
+    # If from the initial Count of the words in spam/ non spam document - the count is less than 5 remove them.
     # And update both multinomial and bernoulli counters + the word counts
     def lowFrequency(self):
         for entry in list(self.allWordsInCorpus):
-            if self.wordCountInNotSpam_Multinomial[entry] + self.wordCountInSpam_Multinomial[entry] < 10:
+            if self.wordCountInNotSpam_Multinomial[entry] + self.wordCountInSpam_Multinomial[entry] < 5:
                 self.deleteWordUpdateCount(entry)
          
     def removeWordsFromConsideration(self):
         self.lowFrequency()
         #self.removeNumbers()
 
-    def calculate(self):
+    def calculate(self, modelType):
+        self.modelType = modelType
         print "Reading Files..."
         self.totNotSpamDocs, self.totWordsInNotSpam = self.creatingVector(self.wordCountInNotSpam_Multinomial, self.wordCountInNotSpam_Bernoulli, 'notspam')
         self.totSpamDocs, self.totWordsInSpam = self.creatingVector(self.wordCountInSpam_Multinomial, self.wordCountInSpam_Bernoulli, 'spam')
-        self.removeWordsFromConsideration()
+        if modelType == 'tree':
+            self.removeWordsFromConsideration()
         
         # + 2 for smoothing
         self.totSpamDocs += 2
@@ -226,7 +213,7 @@ class ProcessCorpus:
 
     def getWordsInAllDocuments(self, documentDictList, classType):
         # Reading all files in train directory
-        directoryPath = self.directory + '/train/' + classType
+        directoryPath = self.directory + '/' + classType
         for fileName in os.listdir(directoryPath):
             with open(directoryPath + '/' + fileName) as document:
                 documentDictList.append(self.getWordsInDocument(document))

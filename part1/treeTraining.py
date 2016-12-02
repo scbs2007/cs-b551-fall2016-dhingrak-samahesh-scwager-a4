@@ -20,7 +20,8 @@ class TrainingTreeModel:
         self.documentDictListNotSpam = []
         
     def train(self):
-        self.processCorpus.calculate()
+        print "Total time that will be taken is around 8.73 minutes."
+        self.processCorpus.calculate('tree')
         self.processCorpus.getWordsInAllDocuments(self.documentDictListSpam, 'spam')
         self.processCorpus.getWordsInAllDocuments(self.documentDictListNotSpam, 'notspam')
 

@@ -23,7 +23,7 @@ class BinaryTree:
         self.documentDictListNotSpam = notSpamDocuments
 
     def dtLearning(self):
-        print "Training Decision Tree Model for binary attributes... Please wait..."
+        print "Training Decision Tree Model - binary values (ID3 Algorithm)... Please wait..."
         #pool = ThreadPool(10) # Thread pool 
         rootWord = self.mostImportantWordForRoot() # Split on this word #print rootWord
         root = BinaryNode(attribute=rootWord)
