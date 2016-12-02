@@ -98,35 +98,35 @@ For Tree Model:
 
 Testing On Tree (binary attributes)...
 
-Accuracy Percentage:  94.71
+Accuracy Percentage:  94.4
 Confidence Matrix:
-True Positive:  1125
-False Negative:  75
-False Positive:  60
-True Negative:  1294
+True Positive:  1126
+False Negative:  84
+False Positive:  59
+True Negative:  1285
 
 
 Top 4 layers of the tree: (Left branch - Word was absent. Right branch - Word was present.)
 Layer  1 :  ['jalapeno']
 Layer  2 :  ['reported', 'receive']
-Layer  3 :  ['reserved', 'aging', 'click', 'form']
-Layer  4 :  ['wrote', 'mime-version', 'rating', None, 'reply', 'discussion', 'rohit', None]
+Layer  3 :  ['wrote', 'aging', 'click', 'form']
+Layer  4 :  ['reserved', 'customer', 'rating', None, 'reply', 'discussion', 'offer', None]
 Testing On Tree (binary attributes)...
 
 
 Accuracy Percentage:  94.17
 Confidence Matrix:
-True Positive:  1133
-False Negative:  97
-False Positive:  52
-True Negative:  1272
+True Positive:  1122
+False Negative:  86
+False Positive:  63
+True Negative:  1283
 
 
 Top 4 layers of the tree:
 Layer  1 :  ['jalapeno']
 Layer  2 :  ['reported', 'receive']
 Layer  3 :  ['footer', 'aging', 'click', 'form']
-Layer  4 :  ['wrote', None, 'rating', None, 'reply', 'discussion', 'khare', None]
+Layer  4 :  ['group', None, 'rating', None, 'reply', 'discussion', 'offer', None]
 
 
 
