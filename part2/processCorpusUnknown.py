@@ -18,7 +18,7 @@ class ProcessCorpusUnknown:
         self.probKnowTopic = probKnowTopic #probability that we know the topic of a given document
         self.wordCountInEachDoc = Counter() #stores key = document ID, value = Counter object reference (count of each word's occurrence in the given doc) 
         self.totalWordsInEachDoc = Counter() #stores key = document ID, value = total words
-        self.topicIsFixed = {} #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
+        self.topicIsFixed = Counter() #stores key = document ID, value = tuple: topic, whether topic was known in advance or only estimated
         self.unknownWordCount = 0
         self.unknownDocCount = 0
         self.wordFreqInCorpus = Counter() 
@@ -73,25 +73,25 @@ class ProcessCorpusUnknown:
         return True
         
     def toConsiderOrNotToConsider(self, word):
-
+        '''
         if word in self.unwanted:
             return False 
 
         if word in self.stopWords:
             return False
-        
+        '''
         if word == '':
             return False
-       
+        
         if any(ch in self.remove for ch in word):
             return False 
-
+        
         if str.isdigit(word):
             return False
-         
+        '''
         if len(word) > 15 or len(word) < 3:
             return False
-
+        '''
         return True
 
     # This function is used in bayesTesting.py too
@@ -102,9 +102,9 @@ class ProcessCorpusUnknown:
         flag = True
         for token in document.read().split():
             # Remove HTML tags and URLs
-            if self.checkUnwanted(token) == False or ('<' in token or '>' in token) or token.startswith('http://'):
+            '''if self.checkUnwanted(token) == False or ('<' in token or '>' in token) or token.startswith('http://'):
                 #print token
-                continue
+                continue'''
 
             #    for entry in self.splitOnPunctuations(token, regex):
             token = str.lower(str.lstrip(str.rstrip(token, string.punctuation), string.punctuation))
@@ -171,12 +171,3 @@ class ProcessCorpusUnknown:
             self.wordCountMappingBernoulli[topic] = wordFreqBernoulli
         self.totalDocs = sum([docs for topics, (docs, words) in self.docsAndWords.items()]) #count only known docs
         print "Words counted in all documents in all topics!"
-
-'''
-checking for bugs:
-creating vector: docWordFreq for individual doc is OK so self.wordCountInEachDoc[docID] is OK
-totalDocs is ok: counts only known docs
-unknownDocCount is ok
-wordCountMapping and wordFreq are ok
-didn't check totalWords but am 99% sure it's ok
-'''

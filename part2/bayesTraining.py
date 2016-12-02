@@ -3,6 +3,7 @@ import os, string, sys, math, pickle, re, heapq, random
 from collections import Counter
 from processCorpusUnknown import ProcessCorpusUnknown
 
+
 class TrainingBayesModel:
     def __init__(self, directory, probKnowTopic = 1.):
         self.directory = directory
@@ -14,7 +15,7 @@ class TrainingBayesModel:
         self.probWGivenTopic_Bernoulli = Counter()
         self.probTopic = Counter()
         self.probWord = Counter() #probability of each word occurring in the corpus
-        
+
     # Top 10 most associated with spam
     def mostAssociated(self, prob):
         return heapq.nlargest(10, prob, key=prob.get)
@@ -29,6 +30,14 @@ class TrainingBayesModel:
         for entry in l:
             s += entry + " "
         return s
+
+    def calculateProbWordsGivenTopic(self, probWGivenT, wordCount, pClass):
+#         Takes into account the case where no words are in probWGivenT, i.e. probKnowTopic is zero or nearly zero
+        w = 0 + sum([math.log(probWGivenT[entry]) for entry in wordCount if entry in probWGivenT])
+        if w == 0: 
+            return -1000000
+        return w + math.log(pClass) + sum([1-math.log(probWGivenT[entry]) for entry in probWGivenT if entry not in wordCount])            
+
         
     def calculateProbTopicGivenWord(self, probWT, probT):
         probTW = Counter()
@@ -90,16 +99,10 @@ class TrainingBayesModel:
             prob[entry] = count/totalWords
         return prob
         
-    def calculateProbWordsGivenTopic(self, probWGivenT, wordCount, pClass):
-        # For now considering only words present in the training data.
-#         Takes into account the case where no  words are in probWGivenT, i.e. probKnowTopic is very small
-        w = 0 + sum([math.log(probWGivenT[entry]) for entry in wordCount if entry in probWGivenT])
-        return w + math.log(pClass) if w != 0 else -1000000
-        
-    def assignTopicsToUnknown(self, wordCountInEachDoc, topicIsFixed, probWGivenTopic, probTopic): 
+    def assignTopicsToUnknown(self, wordCountInEachDoc, topicIsFixed, probWGivenTopic, probTopic, changeThresh): 
         '''assign max prob topic to each doc whose topic is unknown
         TO DO: assign randomly when the number of docs with known topics is small or zero'''
-        change = False #true if a document changed topic assignment, i.e., convergence has not occurred
+        change = 0 #true if a document changed topic assignment, i.e., convergence has not occurred
         for docID, (fixed, topicID) in topicIsFixed.items():
             if not fixed:
                 oldtopicID = topicID
@@ -112,8 +115,8 @@ class TrainingBayesModel:
 #                         print "highestProbTopic", highestProbTopic, "prob", prob
                 if not highestProbTopic: highestProbTopic = random.choice([topic for topic in probTopic]) #assign randomly
                 topicIsFixed[docID] = (False, highestProbTopic)
-                if highestProbTopic != topicID: change = True #an assignment was changed
-        return change 
+                if highestProbTopic != topicID: change += 1 #an assignment was changed
+        return True if change >= changeThresh else False
                 
     def updateTotDocWordCountInTopics(self, totDocWordCountInTopics, totalWordsInEachDoc, topicIsFixed):
         '''updates the number of words and the number of documents for all topics as tuples'''
@@ -161,24 +164,16 @@ class TrainingBayesModel:
         self.probWord = self.calculateProbWord(wordFreqInCorpus, totalWords)
         self.probWGivenTopic_Multinomial = self.calculateProbWGivenTopics_Multinomial(wordCountInTopicsMultinomial, totDocWordCountInTopics)
         self.probWGivenTopic_Bernoulli = self.calculateProbWGivenTopics_Bernoulli(wordCountInTopicsBernoulli, totDocWordCountInTopics)
-  
         '''Iterations and updates'''
         '''assign topics to unassigned docs'''
-        print "before assigning topics\n\n"
-        counter = 0
-        for entry, (fixed, topic) in topicIsFixed.items():
-            if counter < 20: print entry, fixed, topic
-            counter += 1
-        converged = self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic)
-        print "after assigning topics\n\n"
-        counter = 0
-        for entry, (fixed, topic) in topicIsFixed.items():
-            if counter < 20: print entry, fixed, topic
-            counter += 1
+        changeThresh = 100 #max number of docs that can change assignment in an iteration for the program to converge
+        print "assigning topics to docs..."
+        converged = self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic, changeThresh)
             
         '''iterative assignment. TO DO: delete last line of loop'''
         while not converged:
             '''update counts'''
+            print "new iteration: assigning topics to docs..."
             totalDocs = len(topicIsFixed) #now, all docs have been assigned
             updatedTotDocWordCountInTopics = self.updateTotDocWordCountInTopics(totDocWordCountInTopics, totalWordsInEachDoc, topicIsFixed) #update doc word count for each topic with newly assigned docs
     #         print "old", totDocWordCountInTopics, "updated", updatedTotDocWordCountInTopics
@@ -189,8 +184,7 @@ class TrainingBayesModel:
             self.probWGivenTopic_Bernoulli = self.calculateProbWGivenTopics_Bernoulli(updatedWordCountInTopicsBernoulli, updatedTotDocWordCountInTopics)
             '''update document assignments once again'''
             converged = self.assignTopicsToUnknown(wordCountInEachDoc, topicIsFixed, self.probWGivenTopic_Bernoulli, self.probTopic)
-            converged = True #TO DO: delete this line once the assignment is working correctoy
-
+        
         '''Processing the results'''
         probTopicGivenWord, s = self.findTop10WordsGivenTopic()
         with open("distinctive_words.txt", "w") as text_file:
