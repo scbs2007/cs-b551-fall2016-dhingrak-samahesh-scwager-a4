@@ -66,64 +66,68 @@ We had to stick with the present result.
 Result:
 #################################################################################################################
 For Bayes Model:
+
 Testing with binary vector...
 
-Accuracy Percentage:  68.01
+Accuracy Percentage:  61.82
 Confidence Matrix:
-True Positive:  927
-False Negative:  559
-False Positive:  258
-True Negative:  810
+True Positive:  1031
+False Negative:  821
+False Positive:  154
+True Negative:  548
 
 
 Testing with raw count vector...
 
-Accuracy Percentage:  76.51
+Accuracy Percentage:  90.45
 Confidence Matrix:
-True Positive:  1135
-False Negative:  550
-False Positive:  50
-True Negative:  819
+True Positive:  1074
+False Negative:  133
+False Positive:  111
+True Negative:  1236
+
 
 Top 10 words most associated with spam:
-email  helvetica  mon  free  wed  tue  thu  sans-serif  smtp  ist
+email  free  new  money  business  list  microsoft  information  receive  internet
 
 Top 10 words least associated with spam:
-geneva  chris  xml  cnet  perl  weblog  rpm  exmh  pgp  blog
+geneva  chris  cnet  weblog  blog  matthias  habeas  folder  unseen  bug
 
 
 For Tree Model:
 
 Testing On Tree (binary attributes)...
 
-Accuracy Percentage:  94.4
+Accuracy Percentage:  94.71
 Confidence Matrix:
-True Positive:  1126
-False Negative:  84
-False Positive:  59
-True Negative:  1285
+True Positive:  1125
+False Negative:  75
+False Positive:  60
+True Negative:  1294
+
 
 Top 4 layers of the tree: (Left branch - Word was absent. Right branch - Word was present.)
 Layer  1 :  ['jalapeno']
 Layer  2 :  ['reported', 'receive']
-Layer  3 :  ['wrote', 'aging', 'click', 'form']
-Layer  4 :  ['reserved', 'customer', 'rating', None, 'reply', 'discussion', 'offer', None]
-
-
+Layer  3 :  ['reserved', 'aging', 'click', 'form']
+Layer  4 :  ['wrote', 'mime-version', 'rating', None, 'reply', 'discussion', 'rohit', None]
 Testing On Tree (binary attributes)...
+
 
 Accuracy Percentage:  94.17
 Confidence Matrix:
-True Positive:  1122
-False Negative:  86
-False Positive:  63
-True Negative:  1283
+True Positive:  1133
+False Negative:  97
+False Positive:  52
+True Negative:  1272
+
 
 Top 4 layers of the tree:
 Layer  1 :  ['jalapeno']
 Layer  2 :  ['reported', 'receive']
 Layer  3 :  ['footer', 'aging', 'click', 'form']
-Layer  4 :  ['group', None, 'rating', None, 'reply', 'discussion', 'offer', None]
+Layer  4 :  ['wrote', None, 'rating', None, 'reply', 'discussion', 'khare', None]
+
 
 
 Which Technique works best?

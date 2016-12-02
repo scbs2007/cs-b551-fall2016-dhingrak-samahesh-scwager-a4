@@ -37,7 +37,7 @@ class TestingBinaryTreeContinuous:
         return 'spam' if root.decision == True else 'notspam'
 
     def testDocuments(self, classType):
-        directoryPath = self.directory + '/test/' + classType
+        directoryPath = self.directory + '/' + classType
         for fileName in os.listdir(directoryPath):
             with open(directoryPath + '/' + fileName) as document:
                 wordCounter = self.modelObj.processCorpus.getWordsInDocument(document)

@@ -70,9 +70,9 @@ class ProcessCorpus:
         
     def toConsiderOrNotToConsider(self, word):
 
-        if self.modelType == 'tree':
-            if word in self.unwanted:
-                return False 
+        #if self.modelType == 'tree':
+        if word in self.unwanted:
+            return False 
 
         if word in self.stopWords:
             return False

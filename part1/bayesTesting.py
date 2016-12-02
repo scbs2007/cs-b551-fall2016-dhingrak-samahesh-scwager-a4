@@ -152,9 +152,10 @@ class TestingBayesModel:
         self.displayAccuracy(confidenceMatrix_Bernoulli)
         #print "OB: min", min(ob)
         #print "OB: max", max(ob)
+        
         ####################################################################################################################
         # Testing Multinomial Model
-        threshold = .701 # 90.45% Accuracy with .701 #.64999 
+        threshold = .701 #.701 # 90.45% Accuracy with .701 #.64999 
         print "\n\nTesting with raw count vector..."
         self.testModel('spam', pSpam, pNotSpam, probWGivenNotSpam_Multinomial, probWGivenSpam_Multinomial, confidenceMatrix_Multinomial, \
                         threshold, modelObj.processCorpus.fetchTokens, 'multinomial')
